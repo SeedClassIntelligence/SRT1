@@ -45,6 +45,16 @@
           "at": "2026-10-26T15:16:38Z",
           "exit": 0,
           "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.851s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:24:58Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.787s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:25:01Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.687s\n\nOK\n"
         }
       ],
       "test": {
@@ -103,6 +113,16 @@
           "at": "2026-10-26T15:16:38Z",
           "exit": 0,
           "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:24:59Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:25:02Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.029s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -111,133 +131,188 @@
       "statement": "Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.",
       "origin": "intent",
       "evidence": "spec 5.1 (stream status); listed as unfinished in the V1 handoff",
-      "status": "failed",
+      "status": "open",
       "test": {
         "file": "capabilities/test_c3_stream_status.py",
         "specs": [
           "capabilities/test_c3_stream_status.py"
         ],
         "files": {
-          "capabilities/test_c3_stream_status.py": "ac7fbe39ccd1ca6993c50278a0e2c228c09a1d5d778fadaac950bafc3cf09cfd"
+          "capabilities/test_c3_stream_status.py": "ef717e60b8524dfac901d3cef66c12679c5a288e26701a5ac85e7460a7827f46"
         },
-        "sha256": "ac7fbe39ccd1ca6993c50278a0e2c228c09a1d5d778fadaac950bafc3cf09cfd",
+        "sha256": "ef717e60b8524dfac901d3cef66c12679c5a288e26701a5ac85e7460a7827f46",
         "cmd": "python3 -m unittest capabilities.test_c3_stream_status",
-        "bound_at": "2026-10-26T14:41:21Z",
-        "build_files_at_bind": []
+        "bound_at": "2026-10-26T15:25:41Z",
+        "build_files_at_bind": [],
+        "rebind_reason": "Mutation c3-archived-accepts-input survived: tests did not assert that an ARCHIVED stream stores nothing. Added test_archived_stream_stores_nothing; no existing assertion changed."
       },
-      "runs": [
+      "runs": [],
+      "tests_added_since_bind": 0,
+      "rebinds": [
+        {
+          "at": "2026-10-26T15:25:41Z",
+          "reason": "Mutation c3-archived-accepts-input survived: tests did not assert that an ARCHIVED stream stores nothing. Added test_archived_stream_stores_nothing; no existing assertion changed.",
+          "ref": "C3:c631d52e1838",
+          "files": [
+            "capabilities/test_c3_stream_status.py"
+          ]
+        }
+      ],
+      "history": [
         {
           "at": "2026-10-26T14:41:22Z",
           "exit": 1,
-          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "ac7fbe39ccd1"
         },
         {
           "at": "2026-10-26T14:44:26Z",
           "exit": 1,
-          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nFAILED (errors=4)\n"
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "ac7fbe39ccd1"
         },
         {
           "at": "2026-10-26T14:44:35Z",
           "exit": 1,
-          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.016s\n\nFAILED (errors=4)\n"
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.016s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "ac7fbe39ccd1"
         },
         {
           "at": "2026-10-26T15:08:33Z",
           "exit": 1,
-          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "ac7fbe39ccd1"
         },
         {
           "at": "2026-10-26T15:16:38Z",
           "exit": 1,
-          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "ac7fbe39ccd1"
+        },
+        {
+          "at": "2026-10-26T15:24:59Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nOK\n",
+          "under_test_sha": "ac7fbe39ccd1"
+        },
+        {
+          "at": "2026-10-26T15:25:02Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nOK\n",
+          "under_test_sha": "ac7fbe39ccd1"
         }
-      ],
-      "tests_added_since_bind": 0
+      ]
     },
     "C4": {
       "statement": "When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.",
       "origin": "intent",
       "evidence": "spec 10.3, 10.4, INV-022, INV-032; reclaim(branch) returns a package but changes no state today",
-      "status": "failed",
+      "status": "open",
       "test": {
         "file": "capabilities/test_c4_branch_reclaim.py",
         "specs": [
           "capabilities/test_c4_branch_reclaim.py"
         ],
         "files": {
-          "capabilities/test_c4_branch_reclaim.py": "5dbf881fd31c71c9f8ee25ee0aee4b6cf1cfc70dcadc1e90e018d99c2bf7291c"
+          "capabilities/test_c4_branch_reclaim.py": "6c6437d71b577c5940acf3c9f19854fc6f92008258e67ac2880887e0311d8f2a"
         },
-        "sha256": "5dbf881fd31c71c9f8ee25ee0aee4b6cf1cfc70dcadc1e90e018d99c2bf7291c",
+        "sha256": "6c6437d71b577c5940acf3c9f19854fc6f92008258e67ac2880887e0311d8f2a",
         "cmd": "python3 -m unittest capabilities.test_c4_branch_reclaim",
-        "bound_at": "2026-10-26T14:41:21Z",
-        "build_files_at_bind": []
+        "bound_at": "2026-10-26T15:25:41Z",
+        "build_files_at_bind": [],
+        "rebind_reason": "Mutation c4-return-point-not-reanchored survived: the parent position was identical at branch open and at reclaim, so re-anchoring was unobservable. Added a test where the parent moves before reclaim; no existing assertion changed."
       },
-      "runs": [
+      "runs": [],
+      "tests_added_since_bind": 0,
+      "rebinds": [
+        {
+          "at": "2026-10-26T15:25:41Z",
+          "reason": "Mutation c4-return-point-not-reanchored survived: the parent position was identical at branch open and at reclaim, so re-anchoring was unobservable. Added a test where the parent moves before reclaim; no existing assertion changed.",
+          "ref": "C4:fdef8e7a2714",
+          "files": [
+            "capabilities/test_c4_branch_reclaim.py"
+          ]
+        }
+      ],
+      "history": [
         {
           "at": "2026-10-26T14:41:22Z",
           "exit": 1,
-          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.043s\n\nFAILED (errors=4)\n"
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.043s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "5dbf881fd31c"
         },
         {
           "at": "2026-10-26T14:44:26Z",
           "exit": 1,
-          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nFAILED (errors=4)\n"
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "5dbf881fd31c"
         },
         {
           "at": "2026-10-26T14:44:36Z",
           "exit": 1,
-          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.057s\n\nFAILED (errors=4)\n"
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.057s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "5dbf881fd31c"
         },
         {
           "at": "2026-10-26T15:08:33Z",
           "exit": 1,
-          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.036s\n\nFAILED (errors=4)\n"
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.036s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "5dbf881fd31c"
         },
         {
           "at": "2026-10-26T15:16:38Z",
           "exit": 1,
-          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.037s\n\nFAILED (errors=4)\n"
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.037s\n\nFAILED (errors=4)\n",
+          "under_test_sha": "5dbf881fd31c"
+        },
+        {
+          "at": "2026-10-26T15:24:59Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.046s\n\nOK\n",
+          "under_test_sha": "5dbf881fd31c"
+        },
+        {
+          "at": "2026-10-26T15:25:02Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.046s\n\nOK\n",
+          "under_test_sha": "5dbf881fd31c"
         }
-      ],
-      "tests_added_since_bind": 0
+      ]
     },
     "C5": {
       "statement": "When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).",
       "origin": "intent",
       "evidence": "spec 8.4-8.6, INV-034, INV-035; gap #5 of the V1 handoff",
-      "status": "passed",
+      "status": "open",
       "test": {
         "file": "capabilities/test_c5_multiprocess.py",
         "specs": [
           "capabilities/test_c5_multiprocess.py"
         ],
         "files": {
-          "capabilities/test_c5_multiprocess.py": "9eaa15ced9b70c8198372840949039eb8f5f17ab64ad2320c2d3368fb995ea09"
+          "capabilities/test_c5_multiprocess.py": "7a975dddfecb326ce4d0b254c4a325d652585f0ddd7487e849328cd0d43cf431"
         },
-        "sha256": "9eaa15ced9b70c8198372840949039eb8f5f17ab64ad2320c2d3368fb995ea09",
+        "sha256": "7a975dddfecb326ce4d0b254c4a325d652585f0ddd7487e849328cd0d43cf431",
         "cmd": "python3 -m unittest capabilities.test_c5_multiprocess",
-        "bound_at": "2026-10-26T15:08:31Z",
+        "bound_at": "2026-10-26T15:25:42Z",
         "build_files_at_bind": [],
-        "rebind_reason": "Coverage hole: mutation 'remove source-event claim check' was killed only by the red C2-C4 tests. Added test_one_stored_source_event_processed_by_many_processes_commits_once (fails under that mutation: IntegrityError/DUPLICATE mismatch); made PROCS/PER env-tunable (default unchanged: 6x15). No existing assertion weakened."
+        "rebind_reason": "Mutation c5-torn-read-allowed survived default runs (race too rare). Added a deterministic consistent-snapshot test (second process commits mid-load); no existing assertion changed."
       },
-      "runs": [
-        {
-          "at": "2026-10-26T15:08:35Z",
-          "exit": 0,
-          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.767s\n\nOK\n"
-        },
-        {
-          "at": "2026-10-26T15:16:40Z",
-          "exit": 0,
-          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.885s\n\nOK\n"
-        }
-      ],
+      "runs": [],
       "tests_added_since_bind": 0,
       "rebinds": [
         {
           "at": "2026-10-26T15:08:31Z",
           "reason": "Coverage hole: mutation 'remove source-event claim check' was killed only by the red C2-C4 tests. Added test_one_stored_source_event_processed_by_many_processes_commits_once (fails under that mutation: IntegrityError/DUPLICATE mismatch); made PROCS/PER env-tunable (default unchanged: 6x15). No existing assertion weakened.",
           "ref": "C5:7f9808504cb7",
+          "files": [
+            "capabilities/test_c5_multiprocess.py"
+          ]
+        },
+        {
+          "at": "2026-10-26T15:25:42Z",
+          "reason": "Mutation c5-torn-read-allowed survived default runs (race too rare). Added a deterministic consistent-snapshot test (second process commits mid-load); no existing assertion changed.",
+          "ref": "C5:a0415f4e9d66",
           "files": [
             "capabilities/test_c5_multiprocess.py"
           ]
@@ -261,6 +336,30 @@
           "exit": 0,
           "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.429s\n\nOK\n",
           "under_test_sha": "d34225262494"
+        },
+        {
+          "at": "2026-10-26T15:08:35Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.767s\n\nOK\n",
+          "under_test_sha": "9eaa15ced9b7"
+        },
+        {
+          "at": "2026-10-26T15:16:40Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.885s\n\nOK\n",
+          "under_test_sha": "9eaa15ced9b7"
+        },
+        {
+          "at": "2026-10-26T15:25:01Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.564s\n\nOK\n",
+          "under_test_sha": "9eaa15ced9b7"
+        },
+        {
+          "at": "2026-10-26T15:25:04Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.542s\n\nOK\n",
+          "under_test_sha": "9eaa15ced9b7"
         }
       ]
     },
@@ -283,11 +382,15 @@
   "audit": {},
   "build_dirs": [],
   "mutation": {
-    "at": "2026-10-26T14:43:44Z",
+    "at": "2026-10-26T15:24:58Z",
     "by": "claude",
-    "total": 3,
-    "killed": 3,
-    "survived": [],
+    "total": 10,
+    "killed": 7,
+    "survived": [
+      "c5-torn-read-allowed",
+      "c3-archived-accepts-input",
+      "c4-return-point-not-reanchored"
+    ],
     "invalid": []
   },
   "gaps": [

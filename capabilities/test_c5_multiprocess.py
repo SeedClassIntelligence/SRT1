@@ -82,6 +82,27 @@ class TestMultiProcess(unittest.TestCase):
         decs = [i for i in s.store.load_model(self.sid).items.values() if i["item_type"] == "DECISION"]
         self.assertEqual(len(decs), 1)
 
+    def test_read_is_a_consistent_snapshot_even_if_another_process_commits_mid_load(self):
+        """A torn read (stream row from before a commit, living state from after) must not look like corruption:
+        treating it as corruption ran a stale recovery that rewound the projection under live writers."""
+        a, b = SRT1(self.path), SRT1(self.path)
+        self.addCleanup(a.store.db.close)
+        self.addCleanup(b.store.db.close)
+        orig, fired = a.store.get_stream, []
+
+        def get_stream_then_commit_elsewhere(sid):
+            row = orig(sid)
+            if not fired:
+                fired.append(1)
+                self.assertEqual(b.observe("POSITION: committed by another process", sid).status, "COMMITTED")
+            return row
+        a.store.get_stream = get_stream_then_commit_elsewhere
+        model = a.store.load_model(self.sid)  # must not raise ProjectionCorrupt
+        a.store.get_stream = orig
+        self.assertEqual(model.version, 1)  # the snapshot it started from
+        self.assertEqual(a.store.load_model(self.sid).version, 2)
+        self.assertEqual(a.store.observations(self.sid, "RECOVERY"), [])
+
     def test_one_stored_source_event_processed_by_many_processes_commits_once(self):
         """The source-event claim (INV-034) is what stops this; delta ids differ, external ids are absent."""
         boot = SRT1(self.path)

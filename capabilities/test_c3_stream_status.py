@@ -44,6 +44,13 @@ class TestStreamStatus(unittest.TestCase):
         self.assertEqual(st["state_version"], v)
         self.assertEqual(st["active_intent"]["text"], "keep going")  # history survives archiving
 
+    def test_archived_stream_stores_nothing(self):
+        self.s.set_stream_status(self.sid, "ARCHIVED", "retired")
+        n = self.s.store.one("SELECT COUNT(*) AS n FROM source_events WHERE stream_id=?", (self.sid,))["n"]
+        self.assertEqual(self.s.observe("DECISION: sneak in", self.sid).status, "REFUSED")
+        self.assertEqual(self.s.store.one("SELECT COUNT(*) AS n FROM source_events WHERE stream_id=?",
+                                          (self.sid,))["n"], n)  # archived = read-only, evidence included
+
     def test_paused_stream_still_preserves_source(self):
         self.s.set_stream_status(self.sid, "PAUSED", "break")
         r = self.s.observe("DECISION: thought of while paused", self.sid)

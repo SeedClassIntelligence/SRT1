@@ -36,6 +36,14 @@ class TestBranchReclaim(unittest.TestCase):
         self.s.observe("END BRANCH: done for real", self.sid)
         self.assertEqual(self.s.get_state(self.sid)["current_position"], "implementing the validator")
 
+    def test_return_point_follows_the_parent_as_it_is_at_reclaim_not_when_the_branch_opened(self):
+        self.s.observe("POSITION: now on snapshots", self.sid)  # parent moved on since the branch was opened
+        self.s.reclaim(self.sid, self.bid)
+        self.assertEqual(self.s.get_state(self.sid)["branches"][self.bid]["return_point"]["position"],
+                         "now on snapshots")
+        self.s.observe("END BRANCH: done", self.sid)
+        self.assertEqual(self.s.get_state(self.sid)["current_position"], "now on snapshots")
+
     def test_cannot_reclaim_a_branch_that_is_already_open(self):
         self.assertEqual(self.s.reclaim(self.sid, self.bid)["commit"]["status"], "COMMITTED")
         v = self.s.get_state(self.sid)["state_version"]
