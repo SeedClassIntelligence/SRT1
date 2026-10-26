@@ -60,11 +60,17 @@ classified `NO_MATERIAL_CHANGE`, and ungrounded targets are preserved as UNRESOL
 To use an LLM, wrap a function in `CallableProposer(fn)` that returns a `StateDelta`; the validator and committer
 are unchanged, so a bad proposal can be rejected but cannot corrupt continuity.
 
-## Known V1 limits (stated plainly)
+## Known V1 limits (tracked in Forge, not just here)
 
-- The stream model is loaded whole per commit (fine for thousands of items; needs incremental loading beyond that).
-- Relevance is stemmed-term overlap, not embeddings. Sufficient for the completeness/escalation logic, weak for paraphrase.
-- Concurrency is verified in-process (BEGIN IMMEDIATE + expected-version checks); multi-process contention is untested.
-- `COMPLETION` and stream-status transitions, and reclaiming a branch as a state mutation, are not yet implemented
-  (branch *reclamation packages* are returned; the mutation is for seeds and parked unresolved work).
-- Live-integration tests (build gate "Production") need a real consuming model and are out of scope here.
+Run `python3 .forge/forge.py status` / `report`. The open items are capabilities with failing tests in
+`capabilities/`, so the gate refuses to call the project done while they exist:
+
+- **C2** COMPLETION classification, **C3** stream-status transitions, **C4** reclaiming a branch as a state mutation: open, red.
+- **C6** the spec's *Production* gate (live-model integration) has **not been run** and is not passing; blocked, no model key
+  and no recorded model output exist.
+- **C5** multi-process writers: tested (6 processes x 15 writes on one SQLite file) and passing. The test found a real
+  defect (rebase budget exhausted under contention); fixed.
+
+Recorded as gaps with numbers: whole-stream load per commit (`bench/commit_scaling.py`: ~84 ms median at 1,000 items, crosses
+100 ms at ~1,100-1,250; act before ~1,000 items per stream), term-overlap retrieval, and marker-only `RuleProposer` (a real
+model must be tested against recorded outputs, never live).

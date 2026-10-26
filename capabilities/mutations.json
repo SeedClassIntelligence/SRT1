@@ -1,0 +1,9 @@
+[
+  {"name": "c5-no-rebase-retry", "file": "srt1/core.py",
+   "old": "MAX_REBASE = 25  # stale proposals", "new": "MAX_REBASE = 1  # stale proposals"},
+  {"name": "c5-no-immediate-lock", "file": "srt1/store.py",
+   "old": "self.db.execute(\"BEGIN IMMEDIATE\")", "new": "self.db.execute(\"BEGIN\")"},
+  {"name": "c5-no-source-claims", "file": "srt1/core.py",
+   "old": "self.store.delta_committed(d[\"delta_id\"]) or self.store.claimed(d[\"source_event_ids\"])",
+   "new": "self.store.delta_committed(d[\"delta_id\"])"}
+]

@@ -3,3 +3,8 @@ __pycache__/
 *.db
 *.db-wal
 *.db-shm
+.forge/last-gate.json
+.forge/hook-state.json
+.forge/lock
+.forge/*.tmp
+forge.json.*.tmp

@@ -1,0 +1,245 @@
+{
+  "name": "srt1",
+  "idea": "SRT1 Seed Reflection Tool: a persistent continuity and reflection intelligence implementing the Canonical V1.0 specification",
+  "created": "2026-10-26T14:36:28Z",
+  "builder": "claude",
+  "require_audit": false,
+  "strict": false,
+  "keys": {},
+  "key_regs": {},
+  "acks": [],
+  "capabilities": {
+    "C1": {
+      "statement": "The existing test suite keeps passing (regression guard for behaviour that already exists)",
+      "origin": "observed",
+      "evidence": "2 existing test file(s)",
+      "status": "passed",
+      "retrofit": true,
+      "runs": [
+        {
+          "at": "2026-10-26T14:36:38Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.607s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T14:41:22Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.653s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T14:44:26Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.666s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T14:44:35Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.851s\n\nOK\n"
+        }
+      ],
+      "test": {
+        "file": "(existing suite)",
+        "specs": [],
+        "files": {
+          "tests/test_acceptance.py": "efeaa8ac1c1d201131a711ca82c2036c2b9d94d85060a6e131cc52faabcf7df4",
+          "tests/test_long_history.py": "415f619567f62a86b9d6235f8c8f60caaae3d50685725dbdfb2baab52d4bd8db"
+        },
+        "cmd": "python3 -m unittest discover -s tests",
+        "bound_at": "2026-10-26T14:36:28Z",
+        "sha256": "5fb6a19f71854a5eacdbcd9c6b2f0a17381a3b24583e52919f5cf09a7a2dcce0",
+        "build_files_at_bind": []
+      }
+    },
+    "C2": {
+      "statement": "When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.",
+      "origin": "intent",
+      "evidence": "spec 5.6, 7.2, INV-008; listed as unfinished in the V1 handoff",
+      "status": "failed",
+      "test": {
+        "file": "capabilities/test_c2_completion.py",
+        "specs": [
+          "capabilities/test_c2_completion.py"
+        ],
+        "files": {
+          "capabilities/test_c2_completion.py": "e0f1d2baf7f5465e633dfe8edab609bcc29a68d1909bafb1d4000e178374dd67"
+        },
+        "sha256": "e0f1d2baf7f5465e633dfe8edab609bcc29a68d1909bafb1d4000e178374dd67",
+        "cmd": "python3 -m unittest capabilities.test_c2_completion",
+        "bound_at": "2026-10-26T14:41:20Z",
+        "build_files_at_bind": []
+      },
+      "runs": [
+        {
+          "at": "2026-10-26T14:41:22Z",
+          "exit": 1,
+          "tail": "~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('NO_CHANGE', 'NO_MATERIAL_CHANGE') != ('COMMITTED', 'COMPLETION')\n\nFirst differing element 0:\n'NO_CHANGE'\n'COMMITTED'\n\n- ('NO_CHANGE', 'NO_MATERIAL_CHANGE')\n+ ('COMMITTED', 'COMPLETION')\n\n----------------------------------------------------------------------\nRan 4 tests in 0.034s\n\nFAILED (failures=3)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:26Z",
+          "exit": 1,
+          "tail": "~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('NO_CHANGE', 'NO_MATERIAL_CHANGE') != ('COMMITTED', 'COMPLETION')\n\nFirst differing element 0:\n'NO_CHANGE'\n'COMMITTED'\n\n- ('NO_CHANGE', 'NO_MATERIAL_CHANGE')\n+ ('COMMITTED', 'COMPLETION')\n\n----------------------------------------------------------------------\nRan 4 tests in 0.025s\n\nFAILED (failures=3)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:35Z",
+          "exit": 1,
+          "tail": "~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('NO_CHANGE', 'NO_MATERIAL_CHANGE') != ('COMMITTED', 'COMPLETION')\n\nFirst differing element 0:\n'NO_CHANGE'\n'COMMITTED'\n\n- ('NO_CHANGE', 'NO_MATERIAL_CHANGE')\n+ ('COMMITTED', 'COMPLETION')\n\n----------------------------------------------------------------------\nRan 4 tests in 0.035s\n\nFAILED (failures=3)\n"
+        }
+      ],
+      "tests_added_since_bind": 0
+    },
+    "C3": {
+      "statement": "Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.",
+      "origin": "intent",
+      "evidence": "spec 5.1 (stream status); listed as unfinished in the V1 handoff",
+      "status": "failed",
+      "test": {
+        "file": "capabilities/test_c3_stream_status.py",
+        "specs": [
+          "capabilities/test_c3_stream_status.py"
+        ],
+        "files": {
+          "capabilities/test_c3_stream_status.py": "ac7fbe39ccd1ca6993c50278a0e2c228c09a1d5d778fadaac950bafc3cf09cfd"
+        },
+        "sha256": "ac7fbe39ccd1ca6993c50278a0e2c228c09a1d5d778fadaac950bafc3cf09cfd",
+        "cmd": "python3 -m unittest capabilities.test_c3_stream_status",
+        "bound_at": "2026-10-26T14:41:21Z",
+        "build_files_at_bind": []
+      },
+      "runs": [
+        {
+          "at": "2026-10-26T14:41:22Z",
+          "exit": 1,
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:26Z",
+          "exit": 1,
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.014s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:35Z",
+          "exit": 1,
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.016s\n\nFAILED (errors=4)\n"
+        }
+      ],
+      "tests_added_since_bind": 0
+    },
+    "C4": {
+      "statement": "When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.",
+      "origin": "intent",
+      "evidence": "spec 10.3, 10.4, INV-022, INV-032; reclaim(branch) returns a package but changes no state today",
+      "status": "failed",
+      "test": {
+        "file": "capabilities/test_c4_branch_reclaim.py",
+        "specs": [
+          "capabilities/test_c4_branch_reclaim.py"
+        ],
+        "files": {
+          "capabilities/test_c4_branch_reclaim.py": "5dbf881fd31c71c9f8ee25ee0aee4b6cf1cfc70dcadc1e90e018d99c2bf7291c"
+        },
+        "sha256": "5dbf881fd31c71c9f8ee25ee0aee4b6cf1cfc70dcadc1e90e018d99c2bf7291c",
+        "cmd": "python3 -m unittest capabilities.test_c4_branch_reclaim",
+        "bound_at": "2026-10-26T14:41:21Z",
+        "build_files_at_bind": []
+      },
+      "runs": [
+        {
+          "at": "2026-10-26T14:41:22Z",
+          "exit": 1,
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.043s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:26Z",
+          "exit": 1,
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T14:44:36Z",
+          "exit": 1,
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.057s\n\nFAILED (errors=4)\n"
+        }
+      ],
+      "tests_added_since_bind": 0
+    },
+    "C5": {
+      "statement": "When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).",
+      "origin": "intent",
+      "evidence": "spec 8.4-8.6, INV-034, INV-035; gap #5 of the V1 handoff",
+      "status": "passed",
+      "test": {
+        "file": "capabilities/test_c5_multiprocess.py",
+        "specs": [
+          "capabilities/test_c5_multiprocess.py"
+        ],
+        "files": {
+          "capabilities/test_c5_multiprocess.py": "d342252624944f1f2d255c8a66b09cd9a86c21b9461f8391de39e60e2570df69"
+        },
+        "sha256": "d342252624944f1f2d255c8a66b09cd9a86c21b9461f8391de39e60e2570df69",
+        "cmd": "python3 -m unittest capabilities.test_c5_multiprocess",
+        "bound_at": "2026-10-26T14:41:21Z",
+        "build_files_at_bind": []
+      },
+      "runs": [
+        {
+          "at": "2026-10-26T14:41:23Z",
+          "exit": 0,
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.164s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T14:44:28Z",
+          "exit": 0,
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.177s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T14:44:37Z",
+          "exit": 0,
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.429s\n\nOK\n"
+        }
+      ],
+      "tests_added_since_bind": 0
+    },
+    "C6": {
+      "statement": "A real consuming model drives observe/get_context end to end against a recorded-output fixture and against a live model, satisfying the spec's Production gate (live integration, long-history, recovery, concurrency, context-economy).",
+      "origin": "intent",
+      "evidence": "spec section 22 Production gate",
+      "status": "blocked",
+      "test": null,
+      "runs": [],
+      "blocked_reason": "Spec Production gate (live-model integration) has NOT been run and is not passing. No model credential or recorded model output is available to this project.",
+      "tried": [
+        "A: live model - no model API key (ANTHROPIC_API_KEY etc.) is provisioned in this environment; the session's own ANTHROPIC_BASE_URL is the harness channel, not a project credential, so it was not used. Failed: nothing to authenticate with.",
+        "B: recorded-output fixture - searched the repo for recorded proposer outputs/cassettes; none exist, and one can only be recorded from a live run (path A). A hand-written fixture would be synthetic, not recorded, so it would not satisfy this capability."
+      ]
+    }
+  },
+  "sources": [],
+  "holds": [],
+  "audit": {},
+  "build_dirs": [],
+  "mutation": {
+    "at": "2026-10-26T14:43:44Z",
+    "by": "claude",
+    "total": 3,
+    "killed": 3,
+    "survived": [],
+    "invalid": []
+  },
+  "gaps": [
+    {
+      "text": "Retrieval relevance is stemmed-term overlap, not embeddings. Not broken: completeness/escalation logic is tested. Known weakness: paraphrased task wording can miss relevant items (it then escalates or reports ambiguity rather than inventing). Swap in embeddings when measured retrieval quality demands it. Not blocking.",
+      "at": "2026-10-26T14:44:14Z"
+    },
+    {
+      "text": "Whole stream is loaded and re-diffed on every commit (bench/commit_scaling.py, this container, SQLite file, periodic snapshots every 5 commits): median commit 14.7 ms @250 items, 39 ms @500, 63 ms @750, 84 ms @1000, 112 ms @1250; first crossing of a 100 ms median at ~1,100-1,250 items, roughly 0.09 ms per item. Threshold proposed: act (incremental load / lazy diff) before a stream passes ~1,000 items; owner may set a different threshold. Re-run the script after any storage change.",
+      "at": "2026-10-26T14:44:14Z"
+    },
+    {
+      "text": "Rule proposer understands only explicit markers (INTENT:, DECISION:, CORRECTION[id]:, ...); unmarked prose is NO_MATERIAL_CHANGE. Design is intentional: validator and commit stay deterministic, a model only proposes. No real-model proposer exists yet. Rule for when one is added: test it against RECORDED outputs (replayed through CallableProposer) so the suite never depends on a live model; no recorder/replayer is built yet.",
+      "at": "2026-10-26T14:44:14Z"
+    },
+    {
+      "text": "Concurrency: tested with up to 6 OS processes x 15 writes on one SQLite file (C5) and found a real defect (rebase budget of 3 exhausted under contention, leaving events DEFERRED); fixed with a 25-attempt jittered rebase. SQLite BEGIN IMMEDIATE is the write lock; writes are SQLite transactions (atomic). Not tested: network filesystems, more than 6 writers, or non-SQLite backends. If only one process will ever write a stream, state that in the deployment notes.",
+      "at": "2026-10-26T14:44:14Z"
+    }
+  ]
+}
