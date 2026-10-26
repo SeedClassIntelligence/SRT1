@@ -1,21 +1,21 @@
 # Report — srt1
 
-Generated 2026-10-26T15:30:37Z. Builder: claude. Idea: SRT1 Seed Reflection Tool: a persistent continuity and reflection intelligence implementing the Canonical V1.0 specification
+Generated 2026-10-26T16:23:22Z. Builder: claude. Idea: SRT1 Seed Reflection Tool: a persistent continuity and reflection intelligence implementing the Canonical V1.0 specification
 
-**Status: GATE PASSED** — with: 1 capability blocked, not built; 4 known gap(s) not built; audit PARTIAL (0/9); test strength: 10/10 mutations killed
+**Status: NOT DONE**
 
 ## Verified (FORGE ran the bound test and it passed)
-- C1: The existing test suite keeps passing (regression guard for behaviour that already exists)  — test `(existing suite)`, last run 2026-10-26T15:30:35Z
-- C2: When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.  — test `capabilities/test_c2_completion.py`, last run 2026-10-26T15:30:35Z
-- C3: Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.  — test `capabilities/test_c3_stream_status.py`, last run 2026-10-26T15:30:35Z
-- C4: When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.  — test `capabilities/test_c4_branch_reclaim.py`, last run 2026-10-26T15:30:35Z
-- C5: When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).  — test `capabilities/test_c5_multiprocess.py`, last run 2026-10-26T15:30:37Z
+- C1: The existing test suite keeps passing (regression guard for behaviour that already exists)  — test `(existing suite)`, last run 2026-10-26T16:23:20Z
+- C2: When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.  — test `capabilities/test_c2_completion.py`, last run 2026-10-26T16:23:20Z
+- C3: Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.  — test `capabilities/test_c3_stream_status.py`, last run 2026-10-26T16:23:20Z
+- C4: When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.  — test `capabilities/test_c4_branch_reclaim.py`, last run 2026-10-26T16:23:20Z
+- C5: When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).  — test `capabilities/test_c5_multiprocess.py`, last run 2026-10-26T16:23:22Z
 
 ## Not verified
 - none
 
 ## Blocked (not built)
-- C6: A real consuming model drives observe/get_context end to end against a recorded-output fixture and against a live model, satisfying the spec's Production gate (live integration, long-history, recovery, concurrency, context-economy). — Spec Production gate (live-model integration) has NOT been run and is not passing. No model credential or recorded model output is available to this project.
+- C6 (REQUIRED — the project is NOT DONE while this is blocked): A real consuming model drives observe/get_context end to end against a recorded-output fixture and against a live model, satisfying the spec's Production gate (live integration, long-history, recovery, concurrency, context-economy). — Spec Production gate (live-model integration) has NOT been run and is not passing. No model credential or recorded model output is available to this project.
     - tried: A: live model - no model API key (ANTHROPIC_API_KEY etc.) is provisioned in this environment; the session's own ANTHROPIC_BASE_URL is the harness channel, not a project credential, so it was not used. Failed: nothing to authenticate with.
     - tried: B: recorded-output fixture - searched the repo for recorded proposer outputs/cassettes; none exist, and one can only be recorded from a live run (path A). A hand-written fixture would be synthetic, not recorded, so it would not satisfy this capability.
 
@@ -46,6 +46,7 @@ Generated 2026-10-26T15:30:37Z. Builder: claude. Idea: SRT1 Seed Reflection Tool
 - Deployment readiness: NOT AUDITED
 
 ## Open problems
+- ! C6: REQUIRED capability is blocked, not built — Spec Production gate (live-model integration) has NOT been run and is not passing. No model credential or recorded model
 - ~ C1: retrofit capability — the tests were written after the code, so test-first is not demonstrated; its strength rests on the mutation check
 - ~ C3: test was rebound 1x — the definition of done changed; owner should see why
 - ~ C4: test was rebound 1x — the definition of done changed; owner should see why

@@ -70,6 +70,21 @@
           "at": "2026-10-26T15:30:35Z",
           "exit": 0,
           "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.720s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:14Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.777s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:17Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.721s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:20Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.675s\n\nOK\n"
         }
       ],
       "test": {
@@ -153,6 +168,21 @@
           "at": "2026-10-26T15:30:35Z",
           "exit": 0,
           "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.033s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:14Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.033s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:17Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.027s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:20Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.042s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -191,6 +221,21 @@
           "at": "2026-10-26T15:30:35Z",
           "exit": 0,
           "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.016s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:14Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.018s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:17Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.016s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:20Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.023s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0,
@@ -283,6 +328,21 @@
           "at": "2026-10-26T15:30:35Z",
           "exit": 0,
           "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.059s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:14Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.056s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:17Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.094s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:20Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.066s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0,
@@ -375,6 +435,21 @@
           "at": "2026-10-26T15:30:37Z",
           "exit": 0,
           "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.515s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:16Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.551s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:19Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.474s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T16:23:22Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.487s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0,
@@ -452,7 +527,9 @@
       "tried": [
         "A: live model - no model API key (ANTHROPIC_API_KEY etc.) is provisioned in this environment; the session's own ANTHROPIC_BASE_URL is the harness channel, not a project credential, so it was not used. Failed: nothing to authenticate with.",
         "B: recorded-output fixture - searched the repo for recorded proposer outputs/cassettes; none exist, and one can only be recorded from a live run (path A). A hand-written fixture would be synthetic, not recorded, so it would not satisfy this capability."
-      ]
+      ],
+      "required": true,
+      "required_reason": "The spec's Production gate (live-model integration) must not read as passing. While it is blocked the project is NOT DONE; the owner decides when it is unblocked or the requirement is revised."
     }
   },
   "sources": [],

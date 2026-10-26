@@ -1,0 +1,68 @@
+--- /tmp/f/forge/forge.py	2026-10-25 19:32:21.000000000 +0000
++++ /tmp/forge_patch/forge.py	2026-10-26 16:21:03.179798983 +0000
+@@ -585,8 +585,24 @@
+                                "evidence": a.evidence or "", "status": "open", "test": None, "runs": []}
+     if a.retrofit:
+         st["capabilities"][cid]["retrofit"] = True
++    if getattr(a, "required", False):
++        st["capabilities"][cid]["required"] = True
+     save(a.project, st, detail=f"{cid}: {a.statement}")
+-    print(f"{cid} [{a.origin}]{' (retrofit: code already exists)' if a.retrofit else ''} {a.statement}")
++    print(f"{cid} [{a.origin}]{' (required)' if getattr(a, 'required', False) else ''}"
++          f"{' (retrofit: code already exists)' if a.retrofit else ''} {a.statement}")
++
++
++def cmd_cap_require(a):
++    """Mark a capability REQUIRED: blocking it no longer lets the gate pass. One-way by design; there is no
++    command to un-require. Use for the capability whose absence means the project is not done (e.g. a
++    production gate), so 'blocked' cannot read as success."""
++    st = load(a.project)
++    c = st["capabilities"].get(a.id) or die(f"no capability {a.id}")
++    if not (a.reason or "").strip():
++        die("--reason is required: say why this capability must be built for the project to be done.", 1)
++    c["required"], c["required_reason"] = True, a.reason.strip()
++    save(a.project, st, detail=f"{a.id} required: {a.reason.strip()}")
++    print(f"{a.id} is now REQUIRED: {a.reason.strip()}")
+ 
+ 
+ def cmd_cap_block(a):
+@@ -890,6 +906,8 @@
+     seen_unresolved = None
+     for cid, c in caps.items():
+         if c["status"] == "blocked":
++            if c.get("required"):
++                hard.append(f"{cid}: REQUIRED capability is blocked, not built — {c.get('blocked_reason', '')[:120]}")
+             continue
+         if not c["test"]:
+             hard.append(f"{cid}: no test bound")
+@@ -947,7 +965,8 @@
+     for cid, c in st["capabilities"].items():
+         mark = {"passed": "[x]", "blocked": "[B]"}.get(c["status"], "[ ]")
+         extra = f": {c['blocked_reason']}" if c["status"] == "blocked" else ""
+-        print(f"{mark} {cid} ({c['origin']}) {c['statement']}  — {c['status']}{extra}")
++        req = "REQUIRED " if c.get("required") else ""
++        print(f"{mark} {cid} ({c['origin']}) {req}{c['statement']}  — {c['status']}{extra}")
+     if st["capabilities"]:
+         print(f"\nspec ref: {spec_ref(st)}" + ("  (owner approval: forge ack spec <ref>)" if st.get("strict") else ""))
+     if st["sources"]:
+@@ -1339,7 +1358,8 @@
+     L += ["", "## Blocked (not built)"]
+     for k, c in st["capabilities"].items():
+         if c["status"] == "blocked":
+-            L.append(f"- {k}: {c['statement']} — {c['blocked_reason']}")
++            L.append(f"- {k}{' (REQUIRED — the project is NOT DONE while this is blocked)' if c.get('required') else ''}: "
++                     f"{c['statement']} — {c['blocked_reason']}")
+             L += [f"    - tried: {t}" for t in c.get("tried", [])]
+     if not any(c["status"] == "blocked" for c in st["capabilities"].values()):
+         L.append("- none")
+@@ -1921,7 +1941,9 @@
+     s.add_argument("--git-hooks", action="store_true"); s.add_argument("--dry-run", action="store_true"); s.set_defaults(f=cmd_install)
+     s = proj(sub.add_parser("doctor")); s.set_defaults(f=cmd_doctor)
+     s = proj(sub.add_parser("cap-add")); s.add_argument("statement"); s.add_argument("--origin", default="intent")
+-    s.add_argument("--evidence"); s.add_argument("--retrofit", action="store_true", help="the code already exists"); s.set_defaults(f=cmd_cap_add)
++    s.add_argument("--evidence"); s.add_argument("--retrofit", action="store_true", help="the code already exists")
++    s.add_argument("--required", action="store_true", help="blocking this capability fails the gate"); s.set_defaults(f=cmd_cap_add)
++    s = proj(sub.add_parser("cap-require")); s.add_argument("id"); s.add_argument("--reason"); s.set_defaults(f=cmd_cap_require)
+     s = proj(sub.add_parser("cap-block")); s.add_argument("id"); s.add_argument("reason")
+     s.add_argument("--tried", action="append"); s.set_defaults(f=cmd_cap_block)
+     s = proj(sub.add_parser("cap-bind")); s.add_argument("id")

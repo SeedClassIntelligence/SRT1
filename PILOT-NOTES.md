@@ -91,3 +91,17 @@ Append, do not rewrite; each entry says whether it was seen in real use or only 
 
 ### 11. Hook-session check, still open
 - Entry 1 stands: a real fresh session has not been observed by me. Owner check outstanding.
+
+### 12. C6 is now REQUIRED — this project runs a patched Forge (owner-requested; review it)
+- Owner asked for C6 (spec Production gate) to be required. Forge had no such concept (entry 10), so Forge itself was changed:
+  `cap-add --required`, new `cap-require <id> --reason`, and `problems()` now makes a **blocked required** capability a
+  hard failure; `status` and `REPORT.md` label it REQUIRED. Result: `GATE: FAIL`, `Status: NOT DONE`.
+- **Disclosure:** the builder changed the tool that gates the builder. The change only tightens the gate, but treat it as
+  untrusted until reviewed. Review it: `pilot/forge-upstream/required-capability.patch` (68 lines against the Forge in
+  `forge.skill`). Its tests are `pilot/forge-upstream/test_required.py` (9); Forge's own suite with them: 109/109 pass.
+  The change was made in a scratch copy and vendored with `forge install` (not by editing `.forge/` in place).
+- **Owner actions:** (a) review the patch; (b) `forge ack forge-update 7718c3b322ee --note '<reviewed the diff>'` — a CI
+  baseline check will demand it once CI exists, because the vendored `forge.py` now differs from `forge.skill`'s;
+  (c) decide whether to take the patch upstream (`forge.skill` in this repo is untouched).
+- Known limits of the patch: `required` is one-way (no un-require command, deliberately) and the CI baseline check does not
+  yet flag a lost `required` flag (direct edits of `forge.json` still trip the hash chain). Neither is tested.
