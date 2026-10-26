@@ -54,7 +54,7 @@ class CallableProposer:
 
 
 CONF_ORDER = ["EXPLICIT", "SUPPORTED", "INFERRED", "UNCERTAIN"]
-PRIORITY = ["PIVOT", "SUPERSESSION", "CORRECTION", "BRANCH", "RECLAMATION", "RESOLUTION", "ABANDONMENT",
+PRIORITY = ["PIVOT", "COMPLETION", "SUPERSESSION", "CORRECTION", "BRANCH", "RECLAMATION", "RESOLUTION", "ABANDONMENT",
             "DEFERMENT", "REFINEMENT", "EXPANSION", "CONTRACTION", "SEED", "CONTINUATION"]
 HEDGE = re.compile(r"\b(maybe|might|perhaps|what if|could we|possibly|not sure)\b|\?\s*$", re.I)
 CMD = re.compile(r"^\s*(?P<cmd>[A-Za-z][A-Za-z ]*?)\s*(?:\[(?P<ref>[^\]]*)\])?\s*:\s*(?P<body>.*\S)\s*$")
@@ -161,6 +161,14 @@ class RuleProposer:
                                                 "relationship_type": rel})
                     classes.add(cl)
                 notes.append(cmd.lower())
+            elif cmd == "COMPLETE":
+                if not active_intent or d.intent_change:
+                    unmatched(cmd, body)
+                else:
+                    d.intent_change = {"kind": "COMPLETE", "item_id": active_intent}
+                    d.trajectory = {"kind": "COMPLETION", "note": text}
+                    classes.add("COMPLETION")
+                    notes.append("complete")
             elif cmd == "PIVOT":
                 if HEDGE.search(text):  # 10.2: uncertain pivot is preserved as a seed
                     d.create_items.append({"ref": ref(), "item_type": "SEED", "authority_status": "PROVISIONAL",
@@ -219,6 +227,12 @@ class RuleProposer:
                                             "lifecycle": "SUPERSEDED" if sup else "CLOSED",
                                             "reason": "superseded" if sup else "corrected"})
                 classes.add("SUPERSESSION" if sup else "CORRECTION")
+            elif cmd == "RECLAIM" and rf and any(
+                    b["status"] == "CLOSED" and b["branch_id"].startswith(rf.strip()) for b in s["branches"].values()):
+                d.branch_actions.append({"action": "RECLAIM", "branch_id": next(
+                    b["branch_id"] for b in s["branches"].values()
+                    if b["status"] == "CLOSED" and b["branch_id"].startswith(rf.strip()))})
+                classes.add("RECLAMATION")
             elif cmd in ("RESOLVE", "DEFER", "ABANDON", "RECLAIM", "CONFIRM"):
                 self._lifecycle(cmd, rf, body, model, d, classes, ref, lower, unmatched, base_conf, auth_default)
             elif cmd == "BRANCH":

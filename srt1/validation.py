@@ -173,8 +173,10 @@ def validate(before: Model, after: Model, d: dict, sources: dict) -> Verdict:
             continue
         o, n = old["authority_status"], new["authority_status"]
         if old["item_type"] == "INTENT":
-            ok = bool(d.get("intent_change")) and iid == before.scalars["active_intent"] \
-                and d["intent_change"]["item_id"] != iid and old["content"] == new["content"]
+            icd = d.get("intent_change") or {}
+            same = icd.get("kind") == "COMPLETE" and icd["item_id"] == iid
+            ok = bool(icd) and iid == before.scalars["active_intent"] and old["content"] == new["content"] \
+                and (same or icd["item_id"] != iid) and (not same or o == n)
             if not ok:
                 hard("INTENT_PROTECTED", "intent may change only through intent_change", "SRT1-INV-018")
         if o in NON_CURRENT and n not in NON_CURRENT:
@@ -217,6 +219,7 @@ def validate(before: Model, after: Model, d: dict, sources: dict) -> Verdict:
         "REOPENING": lambda: bool(d.get("reopen")),
         "BRANCH": lambda: bool(d.get("branch_actions")),
         "PIVOT": lambda: bool(ic and ic["kind"] == "PIVOT"),
+        "COMPLETION": lambda: bool(ic and ic["kind"] == "COMPLETE"),
         "SEED": lambda: any(c["item_type"] == "SEED" for c in d.get("create_items", [])),
         "RECLAMATION": lambda: any(s["action"] == "RECLAIM" for s in d.get("seed_actions", []))
         or bool(d.get("reopen")) or any(a.get("lifecycle") == "OPEN" for a in d.get("authority_changes", []))
@@ -241,6 +244,13 @@ def validate(before: Model, after: Model, d: dict, sources: dict) -> Verdict:
         elif kind == "ORIGIN":
             if before.scalars["originating_intent"]:
                 hard("BAD_INTENT", "originating intent already exists")
+        elif kind == "COMPLETE":
+            if ic["item_id"] != before.scalars["active_intent"]:
+                hard("BAD_INTENT", "only the active intent can be completed")
+            elif before.items[ic["item_id"]]["lifecycle"] == "COMPLETED":
+                hard("BAD_INTENT", "intent is already completed")
+            if cls != "COMPLETION":
+                hard("WRONG_CLASS", "COMPLETE intent change requires COMPLETION classification")
         else:
             prev = before.scalars["active_intent"]
             relmap = {"REFINE": "REFINES", "EXPAND": "EXPANDS", "NARROW": "NARROWS", "PIVOT": "SUPERSEDES"}
@@ -286,6 +296,10 @@ def validate(before: Model, after: Model, d: dict, sources: dict) -> Verdict:
             br = before.scalars["branches"].get(b.get("branch_id"))
             if br is None or br["status"] != "OPEN":
                 hard("BAD_BRANCH", f"branch {b.get('branch_id')} is not open")
+        elif b["action"] == "RECLAIM":
+            br = before.scalars["branches"].get(b.get("branch_id"))
+            if br is None or br["status"] != "CLOSED":
+                hard("BAD_BRANCH", f"branch {b.get('branch_id')} is not a closed branch", "SRT1-INV-022")
         else:
             hard("BAD_BRANCH", f"unknown branch action {b['action']}")
 

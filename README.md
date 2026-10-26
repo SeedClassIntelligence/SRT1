@@ -62,15 +62,16 @@ are unchanged, so a bad proposal can be rejected but cannot corrupt continuity.
 
 ## Known V1 limits (tracked in Forge, not just here)
 
-Run `python3 .forge/forge.py status` / `report`. The open items are capabilities with failing tests in
-`capabilities/`, so the gate refuses to call the project done while they exist:
+Run `python3 .forge/forge.py status` / `report` for the authoritative state; `PILOT-NOTES.md` logs the Forge pilot.
 
-- **C2** COMPLETION classification, **C3** stream-status transitions, **C4** reclaiming a branch as a state mutation: open, red.
-- **C6** the spec's *Production* gate (live-model integration) has **not been run** and is not passing; blocked, no model key
-  and no recorded model output exist.
-- **C5** multi-process writers: tested (6 processes x 15 writes on one SQLite file) and passing. The test found a real
-  defect (rebase budget exhausted under contention); fixed.
-
-Recorded as gaps with numbers: whole-stream load per commit (`bench/commit_scaling.py`: ~84 ms median at 1,000 items, crosses
-100 ms at ~1,100-1,250; act before ~1,000 items per stream), term-overlap retrieval, and marker-only `RuleProposer` (a real
-model must be tested against recorded outputs, never live).
+- **C2 COMPLETION, C3 stream status, C4 branch reclaim:** built and passing their bound tests. Not covered by a bound
+  test (so unproven): a COMPLETED stream still accepts new input; resuming a PAUSED stream does not auto-reprocess the
+  events deferred while paused (use `retry(source_event_id)`).
+- **C6 the spec's Production gate (live-model integration) has NOT been run and is not passing.** Blocked: no model key and no
+  recorded model output exist. It is not described as passing anywhere.
+- **Concurrency (C5):** multi-process writers on one SQLite file are tested; see `PILOT-NOTES.md` for the sweep results and
+  the two real defects it found and fixed. Not tested: network filesystems, non-SQLite backends.
+- **Whole stream loaded per commit** (`bench/commit_scaling.py`): median ~84 ms at 1,000 items, crosses 100 ms at
+  ~1,100-1,250. Owner-approved threshold: act before a stream passes ~1,000 items.
+- **Retrieval** is stemmed-term overlap, not embeddings (paraphrases can miss).
+- **`RuleProposer`** understands only explicit markers; a real model must be tested against recorded outputs, never live.

@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import random
 import time
+from contextlib import nullcontext
 from dataclasses import dataclass, field
 
 from .models import CLARIFY, INVALID, STALE, DeltaError, ProjectionCorrupt, SourceEvent, StateDelta, utcnow
@@ -21,12 +22,12 @@ from .store import Store
 from .validation import validate
 
 STRONG_CLASSES = frozenset({"CORRECTION", "SUPERSESSION", "PIVOT", "BRANCH", "RECLAMATION", "COMPLETION"})
-MAX_REBASE = 25  # stale proposals are regenerated against newer state; contention backs off
+MAX_REBASE = 10  # optimistic regenerations of a stale proposal before the serialised last resort
 
 
 @dataclass
 class Result:
-    status: str                      # COMMITTED | NO_CHANGE | DUPLICATE | STALE | INVALID | REQUIRES_CLARIFICATION | FAILED
+    status: str   # COMMITTED NO_CHANGE DUPLICATE STALE INVALID REQUIRES_CLARIFICATION FAILED DEFERRED REFUSED
     source_event_id: str | None = None
     state_version: int | None = None
     event_id: str | None = None
@@ -48,13 +49,31 @@ class SRT1:
     def create_stream(self, title: str | None = None) -> str:
         return self.store.create_stream(title)
 
+    def set_stream_status(self, stream_id: str, status: str, reason: str | None = None) -> None:
+        """ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED. Logged with a reason; illegal moves raise ValueError."""
+        self.store.set_stream_status(stream_id, status, reason)
+        self.store.log(stream_id, "STREAM_STATUS", {"to": status})
+
+    def stream_status_history(self, stream_id: str) -> list:
+        return self.store.stream_status_history(stream_id)
+
     def load(self, stream_id: str) -> Model:
         """Load the authoritative model, rebuilding a damaged projection from snapshot + events (11.2)."""
         try:
             return self.store.load_model(stream_id)
         except ProjectionCorrupt:
-            self.recover(stream_id)
+            self._heal(stream_id)
             return self.store.load_model(stream_id)
+
+    def _heal(self, stream_id: str):
+        """Recover only under the write lock and only if the damage is still there: a concurrent writer may
+        have committed (or another process healed) since the failed read, and a stale replay must never
+        overwrite a newer projection."""
+        with self.store.tx():
+            try:
+                self.store.load_model(stream_id)
+            except ProjectionCorrupt:
+                self.recover(stream_id)
 
     # ================================================================== observe
     def observe(self, event: SourceEvent | dict | str, stream_id: str | None = None) -> Result:
@@ -66,6 +85,9 @@ class SRT1:
             event.stream_id = stream_id
         if not event.stream_id:
             raise ValueError("observe() needs a stream_id")
+        if self.store.get_stream(event.stream_id)["status"] == "ARCHIVED":  # read-only: nothing is stored
+            self.store.log(event.stream_id, "REFUSED", {"reason": "ARCHIVED"})
+            return Result("REFUSED", event.source_event_id, reasons=["stream is ARCHIVED"])
         row, created = self.store.add_source_event(event)  # evidence is preserved before any interpretation
         sid, seid = row["stream_id"], row["source_event_id"]
         self.store.log(sid, "SOURCE_RECEIVED", {"created": created, "source_type": row["source_type"]}, seid)
@@ -83,34 +105,52 @@ class SRT1:
 
     def _process(self, sid: str, row: dict) -> Result:
         seid = row["source_event_id"]
-        last = Result("FAILED", seid)
-        for attempt in range(1, MAX_REBASE + 1):
-            try:
-                model = self.load(sid)
-                proposal = self.proposer.propose(row, model)
-            except Exception as e:  # interpretation failure never touches state (14.1)
-                self.store.set_processing(seid, "FAILED", f"interpretation: {type(e).__name__}: {e}")
-                self.store.log(sid, "FAILURE", {"stage": "interpret", "error": type(e).__name__}, seid)
-                return Result("FAILED", seid, reasons=[str(e)])
-            if proposal is None or proposal.get("primary_classification") == "NO_MATERIAL_CHANGE":
-                self.store.set_processing(seid, "PROCESSED")
-                self.store.log(sid, "CLASSIFIED", {"classification": "NO_MATERIAL_CHANGE", "depth": 0}, seid)
-                return Result("NO_CHANGE", seid, model.version, classification="NO_MATERIAL_CHANGE")
-            try:
-                r = self.submit_delta(proposal)
-            except Exception as e:  # commit failed and rolled back: last valid state stays authoritative
-                self.store.set_processing(seid, "FAILED", f"commit: {type(e).__name__}: {e}")
-                self.store.log(sid, "FAILURE", {"stage": "commit", "error": type(e).__name__}, seid)
-                return Result("FAILED", seid, reasons=[str(e)])
-            r.source_event_id = seid
-            if r.status == STALE:
-                self.store.log(sid, "REBASE", {"attempt": attempt}, seid)
-                time.sleep(random.uniform(0, 0.005 * attempt))  # jittered backoff between writers
-                last = r
-                continue  # regenerate against the newer state, then revalidate (8.5)
-            return r
-        self.store.set_processing(seid, "DEFERRED", "could not rebase")
-        return last
+        status = self.store.get_stream(sid)["status"]
+        if status == "ARCHIVED":
+            return Result("REFUSED", seid, reasons=["stream is ARCHIVED"])
+        if status == "PAUSED":  # evidence is kept; interpretation waits for resume
+            self.store.set_processing(seid, "DEFERRED", "stream paused")
+            self.store.log(sid, "DEFERRED", {"reason": "PAUSED"}, seid)
+            return Result("DEFERRED", seid, reasons=["stream is PAUSED"])
+        for attempt in range(1, MAX_REBASE + 2):
+            # Optimistic first: propose without holding the write lock (a model may be slow). If writers keep
+            # invalidating the proposal, the last attempt serialises propose+commit so progress is guaranteed.
+            locked = attempt > MAX_REBASE
+            with self.store.tx() if locked else nullcontext():
+                out = self._attempt(sid, row, attempt)
+            if out is not None:
+                return out
+        self.store.set_processing(seid, "DEFERRED", "could not rebase")  # unreachable in practice
+        return Result(STALE, seid)
+
+    def _attempt(self, sid: str, row: dict, attempt: int) -> Result | None:
+        """One propose -> validate -> commit pass. None means the proposal went stale: regenerate (8.5)."""
+        seid = row["source_event_id"]
+        try:
+            model = self.load(sid)
+            proposal = self.proposer.propose(row, model)
+        except Exception as e:  # interpretation failure never touches state (14.1)
+            self.store.set_processing(seid, "FAILED", f"interpretation: {type(e).__name__}: {e}")
+            self.store.log(sid, "FAILURE", {"stage": "interpret", "error": type(e).__name__}, seid)
+            return Result("FAILED", seid, reasons=[str(e)])
+        if proposal is None or proposal.get("primary_classification") == "NO_MATERIAL_CHANGE":
+            self.store.set_processing(seid, "PROCESSED")
+            self.store.log(sid, "CLASSIFIED", {"classification": "NO_MATERIAL_CHANGE", "depth": 0}, seid)
+            return Result("NO_CHANGE", seid, model.version, classification="NO_MATERIAL_CHANGE")
+        try:
+            r = self.submit_delta(proposal)
+        except Exception as e:  # commit failed and rolled back: last valid state stays authoritative
+            self.store.set_processing(seid, "FAILED", f"commit: {type(e).__name__}: {e}")
+            self.store.log(sid, "FAILURE", {"stage": "commit", "error": type(e).__name__}, seid)
+            return Result("FAILED", seid, reasons=[str(e)])
+        r.source_event_id = seid
+        if r.status == "REFUSED":  # paused/archived between propose and commit
+            self.store.set_processing(seid, "DEFERRED", "; ".join(r.reasons))
+        elif r.status == STALE:
+            self.store.log(sid, "REBASE", {"attempt": attempt}, seid)
+            time.sleep(random.uniform(0, 0.005 * attempt))  # jittered backoff between writers
+            return None
+        return r
 
     # ================================================================== delta submission / commit
     def submit_delta(self, delta: StateDelta | dict) -> Result:
@@ -120,6 +160,9 @@ class SRT1:
         self.load(sid)  # ensure a healthy projection before opening the write transaction
         committed = None
         with self.store.tx():
+            st = self.store.get_stream(sid)["status"]
+            if st in ("ARCHIVED", "PAUSED"):
+                return Result("REFUSED", reasons=[f"stream is {st}"])
             if self.store.delta_committed(d["delta_id"]) or self.store.claimed(d["source_event_ids"]):
                 self.store.log(sid, "DUPLICATE_DELTA", {"delta_id": d["delta_id"]})
                 return Result("DUPLICATE", state_version=self.store.get_stream(sid)["current_state_version"])
@@ -158,6 +201,8 @@ class SRT1:
             self.store.append_event(ev, concrete)
             for s in concrete["source_event_ids"]:
                 self.store.set_processing(s, "PROCESSED")
+            if d["primary_classification"] == "COMPLETION":
+                self.store.set_stream_status(sid, "COMPLETED", "COMPLETION event", concrete["event_id"])
             snap = self._evaluate_snapshot(after, concrete)
             self.store.log(sid, "COMMITTED", {"event_id": ev["event_id"], "version": after.version,
                                               "classification": d["primary_classification"],
@@ -261,7 +306,8 @@ class SRT1:
         """Restore preserved cognition (seed, deferred/abandoned work or a branch) with its originating context."""
         model = self.load(stream_id)
         branch = next((b for k, b in model.scalars["branches"].items() if k == target or k.startswith(target)), None)
-        item = next((i for k, i in model.items.items() if k == target or k.startswith(target)), None)
+        item = None if branch is not None else next(
+            (i for k, i in model.items.items() if k == target or k.startswith(target)), None)
         if item is None and branch is None:
             raise KeyError(f"nothing to reclaim for {target}")
         events = self.store.events(stream_id)
@@ -289,22 +335,31 @@ class SRT1:
                 "relevant_decisions_and_constraints": related, "relationships": rels,
                 "source_event_ids": sorted({r["source_event_id"] for r in item["source_refs"]})})
         if branch is not None:
-            pkg.update({"reclaimed_branch": branch, "stopping_position": branch["return_point"].get("position"),
+            pkg.update({"reclaimed_branch": branch,
+                        "stopping_position": (branch.get("stopping_state") or {}).get("position"),
                         "originating_context": branch["return_point"]})
         if commit and item is not None:
             pkg["commit"] = self._commit_reclaim(model, item)
+        elif commit and branch is not None:
+            if branch["status"] == "CLOSED":
+                pkg["commit"] = self._commit_reclaim(model, None, branch)
+            else:
+                pkg["commit"] = {"status": "NOT_APPLICABLE", "reasons": ["branch is already open"]}
         return pkg
 
-    def _commit_reclaim(self, model: Model, item: dict) -> dict:
+    def _commit_reclaim(self, model: Model, item: dict | None, branch: dict | None = None) -> dict:
         """A reclaim mutation is a validated internal continuity event (INV-016), not free-floating state change."""
+        what = item["item_id"] if item else branch["branch_id"]
         row, _ = self.store.add_source_event(SourceEvent(
-            content=f"reclaim {item['item_id']}", source_type="INTERNAL_CONTINUITY_EVENT",
-            stream_id=model.stream_id))
+            content=f"reclaim {what}", source_type="INTERNAL_CONTINUITY_EVENT", stream_id=model.stream_id))
         d = StateDelta(stream_id=model.stream_id, expected_state_version=model.version,
                        source_event_ids=[row["source_event_id"]], primary_classification="RECLAMATION",
-                       confidence="EXPLICIT", summary=f"reclaimed {item['item_type'].lower()}",
+                       confidence="EXPLICIT", summary="reclaimed " + (item["item_type"].lower() if item else "branch"),
                        rationale="explicit reclaim()")
-        apply_reclaim(d, item)
+        if item:
+            apply_reclaim(d, item)
+        else:
+            d.branch_actions.append({"action": "RECLAIM", "branch_id": branch["branch_id"]})
         r = self.submit_delta(d)
         return {"status": r.status, "state_version": r.state_version, "reasons": r.reasons}
 
@@ -354,6 +409,10 @@ class SRT1:
 
     def verify(self, stream_id: str, target: str | None = None) -> dict:
         """Validate the stored representation against deeper evidence: replay equivalence + audit trail."""
+        with self.store.read():
+            return self._verify(stream_id, target)
+
+    def _verify(self, stream_id: str, target: str | None) -> dict:
         model = self.store.load_model(stream_id)
         problems = []
         replay, prev = Model(stream_id), 0

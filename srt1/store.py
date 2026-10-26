@@ -16,6 +16,9 @@ from contextlib import contextmanager
 from .models import ProjectionCorrupt, SourceEvent, new_id, utcnow
 from .state import Model, SCALAR_DEFAULTS, checksum
 
+STATUS_TRANSITIONS = {"ACTIVE": ("PAUSED", "COMPLETED", "ARCHIVED"), "PAUSED": ("ACTIVE", "ARCHIVED"),
+                      "COMPLETED": ("ARCHIVED",), "ARCHIVED": ()}
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS streams(
   stream_id TEXT PRIMARY KEY, title TEXT, status TEXT NOT NULL DEFAULT 'ACTIVE',
@@ -65,6 +68,9 @@ CREATE TABLE IF NOT EXISTS clarifications(
   clarification_id TEXT PRIMARY KEY, stream_id TEXT NOT NULL REFERENCES streams(stream_id),
   source_event_id TEXT NOT NULL, delta TEXT NOT NULL, reasons TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'OPEN', created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS stream_status_log(
+  log_id INTEGER PRIMARY KEY AUTOINCREMENT, stream_id TEXT NOT NULL REFERENCES streams(stream_id),
+  from_status TEXT NOT NULL, to_status TEXT NOT NULL, reason TEXT, via TEXT, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS observations(
   obs_id INTEGER PRIMARY KEY AUTOINCREMENT, stream_id TEXT, source_event_id TEXT, kind TEXT NOT NULL,
   detail TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -91,10 +97,18 @@ class Store:
     @contextmanager
     def tx(self):
         with self._lock:
-            if self._depth:  # re-entrant: join the outer transaction
+            if self._depth:  # nested: a savepoint, so an inner failure undoes only its own writes
                 self._depth += 1
+                sp = f"sp{self._depth}"
+                self.db.execute(f"SAVEPOINT {sp}")
                 try:
                     yield
+                except BaseException:
+                    self.db.execute(f"ROLLBACK TO {sp}")
+                    self.db.execute(f"RELEASE {sp}")
+                    raise
+                else:
+                    self.db.execute(f"RELEASE {sp}")
                 finally:
                     self._depth -= 1
                 return
@@ -108,6 +122,21 @@ class Store:
             else:
                 self.db.execute("COMMIT")
             finally:
+                self._depth = 0
+
+    @contextmanager
+    def read(self):
+        """Consistent read snapshot (WAL): every SELECT inside sees one committed state, never a torn one."""
+        with self._lock:
+            if self._depth:
+                yield
+                return
+            self.db.execute("BEGIN")
+            self._depth = 1
+            try:
+                yield
+            finally:
+                self.db.execute("COMMIT")
                 self._depth = 0
 
     def q(self, sql, args=()):
@@ -130,9 +159,23 @@ class Store:
             raise KeyError(f"unknown stream {stream_id}")
         return dict(r)
 
-    def set_stream_status(self, stream_id, status):
-        self.db.execute("UPDATE streams SET status=?, updated_at=? WHERE stream_id=?",
-                        (status, utcnow(), stream_id))
+    def set_stream_status(self, stream_id, status, reason=None, via=None):
+        """Validated, logged status transition (5.1). Same-status is a no-op; illegal moves raise ValueError."""
+        with self.tx():
+            cur = self.get_stream(stream_id)["status"]
+            if status == cur:
+                return
+            if status not in STATUS_TRANSITIONS.get(cur, ()):
+                raise ValueError(f"illegal stream status transition {cur} -> {status}")
+            now = utcnow()
+            self.db.execute("UPDATE streams SET status=?, updated_at=? WHERE stream_id=?", (status, now, stream_id))
+            self.db.execute("INSERT INTO stream_status_log(stream_id,from_status,to_status,reason,via,created_at) "
+                            "VALUES(?,?,?,?,?,?)", (stream_id, cur, status, reason, via, now))
+
+    def stream_status_history(self, stream_id) -> list:
+        return [{"from": r["from_status"], "to": r["to_status"], "reason": r["reason"], "via": r["via"],
+                 "at": r["created_at"]} for r in self.q(
+                     "SELECT * FROM stream_status_log WHERE stream_id=? ORDER BY log_id", (stream_id,))]
 
     # ------------------------------------------------------------------ source events
     def add_source_event(self, se: SourceEvent) -> tuple[dict, bool]:
@@ -181,6 +224,10 @@ class Store:
             (stream_id, version, payload, checksum({"v": version, "s": scalars}), utcnow()))
 
     def load_model(self, stream_id) -> Model:
+        with self.read():
+            return self._load_model(stream_id)
+
+    def _load_model(self, stream_id) -> Model:
         stream = self.get_stream(stream_id)
         ls = self.one("SELECT * FROM living_state WHERE stream_id=?", (stream_id,))
         if ls is None:

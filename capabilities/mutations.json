@@ -1,9 +1,62 @@
 [
-  {"name": "c5-no-rebase-retry", "file": "srt1/core.py",
-   "old": "MAX_REBASE = 25  # stale proposals", "new": "MAX_REBASE = 1  # stale proposals"},
-  {"name": "c5-no-immediate-lock", "file": "srt1/store.py",
-   "old": "self.db.execute(\"BEGIN IMMEDIATE\")", "new": "self.db.execute(\"BEGIN\")"},
-  {"name": "c5-no-source-claims", "file": "srt1/core.py",
-   "old": "self.store.delta_committed(d[\"delta_id\"]) or self.store.claimed(d[\"source_event_ids\"])",
-   "new": "self.store.delta_committed(d[\"delta_id\"])"}
+ {
+  "name": "c5-no-expected-version-check",
+  "file": "srt1/validation.py",
+  "old": "if d[\"expected_state_version\"] != before.version:",
+  "new": "if False:"
+ },
+ {
+  "name": "c5-no-immediate-lock",
+  "file": "srt1/store.py",
+  "old": "self.db.execute(\"BEGIN IMMEDIATE\")",
+  "new": "self.db.execute(\"BEGIN\")"
+ },
+ {
+  "name": "c5-no-source-claims",
+  "file": "srt1/core.py",
+  "old": "self.store.delta_committed(d[\"delta_id\"]) or self.store.claimed(d[\"source_event_ids\"])",
+  "new": "self.store.delta_committed(d[\"delta_id\"])"
+ },
+ {
+  "name": "c5-torn-read-allowed",
+  "file": "srt1/store.py",
+  "old": "        with self.read():\n            return self._load_model(stream_id)",
+  "new": "        return self._load_model(stream_id)"
+ },
+ {
+  "name": "c2-intent-not-marked-completed",
+  "file": "srt1/state.py",
+  "old": "m.items[new][\"lifecycle\"] = \"COMPLETED\"",
+  "new": "m.items[new][\"lifecycle\"] = \"ACTIVE\""
+ },
+ {
+  "name": "c2-stream-not-completed",
+  "file": "srt1/core.py",
+  "old": "self.store.set_stream_status(sid, \"COMPLETED\", \"COMPLETION event\", concrete[\"event_id\"])",
+  "new": "pass"
+ },
+ {
+  "name": "c3-no-transition-check",
+  "file": "srt1/store.py",
+  "old": "if status not in STATUS_TRANSITIONS.get(cur, ()):",
+  "new": "if False:"
+ },
+ {
+  "name": "c3-archived-accepts-input",
+  "file": "srt1/core.py",
+  "old": "if self.store.get_stream(event.stream_id)[\"status\"] == \"ARCHIVED\":  # read-only: nothing is stored",
+  "new": "if False:  # read-only: nothing is stored"
+ },
+ {
+  "name": "c4-return-point-not-reanchored",
+  "file": "srt1/state.py",
+  "old": "b.update(status=\"OPEN\", closed_version=None, outcome=None, reclaimed_version=v,\n                     return_point={**stopping, \"active_intent\": S[\"active_intent\"]})",
+  "new": "b.update(status=\"OPEN\", closed_version=None, outcome=None, reclaimed_version=v)"
+ },
+ {
+  "name": "c4-position-not-restored",
+  "file": "srt1/state.py",
+  "old": "                    S[k] = stop[key]",
+  "new": "                    pass"
+ }
 ]

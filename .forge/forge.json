@@ -35,6 +35,16 @@
           "at": "2026-10-26T14:44:35Z",
           "exit": 0,
           "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.851s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:08:32Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.831s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:16:38Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.851s\n\nOK\n"
         }
       ],
       "test": {
@@ -54,7 +64,7 @@
       "statement": "When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.",
       "origin": "intent",
       "evidence": "spec 5.6, 7.2, INV-008; listed as unfinished in the V1 handoff",
-      "status": "failed",
+      "status": "passed",
       "test": {
         "file": "capabilities/test_c2_completion.py",
         "specs": [
@@ -83,6 +93,16 @@
           "at": "2026-10-26T14:44:35Z",
           "exit": 1,
           "tail": "~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('NO_CHANGE', 'NO_MATERIAL_CHANGE') != ('COMMITTED', 'COMPLETION')\n\nFirst differing element 0:\n'NO_CHANGE'\n'COMMITTED'\n\n- ('NO_CHANGE', 'NO_MATERIAL_CHANGE')\n+ ('COMMITTED', 'COMPLETION')\n\n----------------------------------------------------------------------\nRan 4 tests in 0.035s\n\nFAILED (failures=3)\n"
+        },
+        {
+          "at": "2026-10-26T15:08:32Z",
+          "exit": 1,
+          "tail": "~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Tuples differ: ('NO_CHANGE', 'NO_MATERIAL_CHANGE') != ('COMMITTED', 'COMPLETION')\n\nFirst differing element 0:\n'NO_CHANGE'\n'COMMITTED'\n\n- ('NO_CHANGE', 'NO_MATERIAL_CHANGE')\n+ ('COMMITTED', 'COMPLETION')\n\n----------------------------------------------------------------------\nRan 4 tests in 0.025s\n\nFAILED (failures=3)\n"
+        },
+        {
+          "at": "2026-10-26T15:16:38Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.038s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -120,6 +140,16 @@
           "at": "2026-10-26T14:44:35Z",
           "exit": 1,
           "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.016s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T15:08:33Z",
+          "exit": 1,
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T15:16:38Z",
+          "exit": 1,
+          "tail": "ll last):\n  File \"/home/user/work/SRT1/capabilities/test_c3_stream_status.py\", line 48, in test_paused_stream_still_preserves_source\n    self.s.set_stream_status(self.sid, \"PAUSED\", \"break\")\n    ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'SRT1' object has no attribute 'set_stream_status'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.015s\n\nFAILED (errors=4)\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -157,6 +187,16 @@
           "at": "2026-10-26T14:44:36Z",
           "exit": 1,
           "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.057s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T15:08:33Z",
+          "exit": 1,
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.036s\n\nFAILED (errors=4)\n"
+        },
+        {
+          "at": "2026-10-26T15:16:38Z",
+          "exit": 1,
+          "tail": "ome/user/work/SRT1/capabilities/test_c4_branch_reclaim.py\", line 47, in test_reclaimed_branch_survives_recovery\n    self.assertEqual(self.s.reclaim(self.sid, self.bid)[\"commit\"][\"status\"], \"COMMITTED\")\n                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^\nKeyError: 'commit'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.037s\n\nFAILED (errors=4)\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -172,31 +212,57 @@
           "capabilities/test_c5_multiprocess.py"
         ],
         "files": {
-          "capabilities/test_c5_multiprocess.py": "d342252624944f1f2d255c8a66b09cd9a86c21b9461f8391de39e60e2570df69"
+          "capabilities/test_c5_multiprocess.py": "9eaa15ced9b70c8198372840949039eb8f5f17ab64ad2320c2d3368fb995ea09"
         },
-        "sha256": "d342252624944f1f2d255c8a66b09cd9a86c21b9461f8391de39e60e2570df69",
+        "sha256": "9eaa15ced9b70c8198372840949039eb8f5f17ab64ad2320c2d3368fb995ea09",
         "cmd": "python3 -m unittest capabilities.test_c5_multiprocess",
-        "bound_at": "2026-10-26T14:41:21Z",
-        "build_files_at_bind": []
+        "bound_at": "2026-10-26T15:08:31Z",
+        "build_files_at_bind": [],
+        "rebind_reason": "Coverage hole: mutation 'remove source-event claim check' was killed only by the red C2-C4 tests. Added test_one_stored_source_event_processed_by_many_processes_commits_once (fails under that mutation: IntegrityError/DUPLICATE mismatch); made PROCS/PER env-tunable (default unchanged: 6x15). No existing assertion weakened."
       },
       "runs": [
         {
+          "at": "2026-10-26T15:08:35Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.767s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:16:40Z",
+          "exit": 0,
+          "tail": "...\n----------------------------------------------------------------------\nRan 3 tests in 1.885s\n\nOK\n"
+        }
+      ],
+      "tests_added_since_bind": 0,
+      "rebinds": [
+        {
+          "at": "2026-10-26T15:08:31Z",
+          "reason": "Coverage hole: mutation 'remove source-event claim check' was killed only by the red C2-C4 tests. Added test_one_stored_source_event_processed_by_many_processes_commits_once (fails under that mutation: IntegrityError/DUPLICATE mismatch); made PROCS/PER env-tunable (default unchanged: 6x15). No existing assertion weakened.",
+          "ref": "C5:7f9808504cb7",
+          "files": [
+            "capabilities/test_c5_multiprocess.py"
+          ]
+        }
+      ],
+      "history": [
+        {
           "at": "2026-10-26T14:41:23Z",
           "exit": 0,
-          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.164s\n\nOK\n"
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.164s\n\nOK\n",
+          "under_test_sha": "d34225262494"
         },
         {
           "at": "2026-10-26T14:44:28Z",
           "exit": 0,
-          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.177s\n\nOK\n"
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.177s\n\nOK\n",
+          "under_test_sha": "d34225262494"
         },
         {
           "at": "2026-10-26T14:44:37Z",
           "exit": 0,
-          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.429s\n\nOK\n"
+          "tail": "..\n----------------------------------------------------------------------\nRan 2 tests in 1.429s\n\nOK\n",
+          "under_test_sha": "d34225262494"
         }
-      ],
-      "tests_added_since_bind": 0
+      ]
     },
     "C6": {
       "statement": "A real consuming model drives observe/get_context end to end against a recorded-output fixture and against a live model, satisfying the spec's Production gate (live integration, long-history, recovery, concurrency, context-economy).",

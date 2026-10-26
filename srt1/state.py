@@ -212,7 +212,10 @@ def apply_delta(model: Model, d: dict) -> Model:
     if ic:
         kind, new = ic["kind"], ic["item_id"]
         prev = S["active_intent"]
-        if kind == "ORIGIN":
+        if kind == "COMPLETE":
+            m.items[new]["lifecycle"] = "COMPLETED"
+            touch(m.items[new])
+        elif kind == "ORIGIN":
             S["originating_intent"] = S["active_intent"] = new
             S["intent_lineage_refs"] = [new]
         else:
@@ -243,9 +246,21 @@ def apply_delta(model: Model, d: dict) -> Model:
                 "return_point": {**stopping, "active_intent": S["active_intent"]}}}
             S["trajectory"] = S["trajectory"] + [{"version": v, "kind": "BRANCH_OPEN",
                                                   "branch_id": ba["branch_id"], "stopping_state": stopping}]
+        elif ba["action"] == "RECLAIM":  # reopen where it stopped; return point = parent as of now (10.3, 10.4)
+            b = dict(S["branches"][ba["branch_id"]])
+            stop = b.get("stopping_state") or {}
+            b.update(status="OPEN", closed_version=None, outcome=None, reclaimed_version=v,
+                     return_point={**stopping, "active_intent": S["active_intent"]})
+            S["branches"] = {**S["branches"], ba["branch_id"]: b}
+            for k, key in (("current_focus", "focus"), ("current_position", "position"),
+                           ("current_direction", "direction")):
+                if key in stop:
+                    S[k] = stop[key]
+            S["trajectory"] = S["trajectory"] + [{"version": v, "kind": "BRANCH_RECLAIM",
+                                                  "branch_id": ba["branch_id"], "stopping_state": stopping}]
         else:  # CLOSE: return to the parent position without reconstruction (10.3)
             b = dict(S["branches"][ba["branch_id"]])
-            b.update(status="CLOSED", closed_version=v, outcome=ba.get("outcome"))
+            b.update(status="CLOSED", closed_version=v, outcome=ba.get("outcome"), stopping_state=stopping)
             S["branches"] = {**S["branches"], ba["branch_id"]: b}
             rp = b["return_point"]
             S["current_focus"], S["current_position"], S["current_direction"] = (
