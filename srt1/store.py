@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS context_metrics(
 class Store:
     def __init__(self, path: str = ":memory:"):
         self.path = path
-        self.db = sqlite3.connect(path, isolation_level=None, check_same_thread=False)
+        self.db = sqlite3.connect(path, isolation_level=None, check_same_thread=False, timeout=30)
         self.db.row_factory = sqlite3.Row
         self.db.execute("PRAGMA foreign_keys=ON")
         if path != ":memory:":

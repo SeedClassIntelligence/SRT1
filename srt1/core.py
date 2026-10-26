@@ -8,6 +8,8 @@ SRT1 -- Seed Reflection Tool. Specification and authorship: Seed Class Intellige
 from __future__ import annotations
 
 import json
+import random
+import time
 from dataclasses import dataclass, field
 
 from .models import CLARIFY, INVALID, STALE, DeltaError, ProjectionCorrupt, SourceEvent, StateDelta, utcnow
@@ -19,7 +21,7 @@ from .store import Store
 from .validation import validate
 
 STRONG_CLASSES = frozenset({"CORRECTION", "SUPERSESSION", "PIVOT", "BRANCH", "RECLAMATION", "COMPLETION"})
-MAX_REBASE = 3
+MAX_REBASE = 25  # stale proposals are regenerated against newer state; contention backs off
 
 
 @dataclass
@@ -103,6 +105,7 @@ class SRT1:
             r.source_event_id = seid
             if r.status == STALE:
                 self.store.log(sid, "REBASE", {"attempt": attempt}, seid)
+                time.sleep(random.uniform(0, 0.005 * attempt))  # jittered backoff between writers
                 last = r
                 continue  # regenerate against the newer state, then revalidate (8.5)
             return r
