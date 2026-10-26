@@ -55,6 +55,21 @@
           "at": "2026-10-26T15:25:01Z",
           "exit": 0,
           "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.687s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:22Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.731s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:25Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.645s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:35Z",
+          "exit": 0,
+          "tail": "......................................................\n----------------------------------------------------------------------\nRan 54 tests in 0.720s\n\nOK\n"
         }
       ],
       "test": {
@@ -123,6 +138,21 @@
           "at": "2026-10-26T15:25:02Z",
           "exit": 0,
           "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.029s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:22Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.033s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:25Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.033s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:35Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 0.033s\n\nOK\n"
         }
       ],
       "tests_added_since_bind": 0
@@ -131,7 +161,7 @@
       "statement": "Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.",
       "origin": "intent",
       "evidence": "spec 5.1 (stream status); listed as unfinished in the V1 handoff",
-      "status": "open",
+      "status": "passed",
       "test": {
         "file": "capabilities/test_c3_stream_status.py",
         "specs": [
@@ -146,7 +176,23 @@
         "build_files_at_bind": [],
         "rebind_reason": "Mutation c3-archived-accepts-input survived: tests did not assert that an ARCHIVED stream stores nothing. Added test_archived_stream_stores_nothing; no existing assertion changed."
       },
-      "runs": [],
+      "runs": [
+        {
+          "at": "2026-10-26T15:30:22Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.021s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:25Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.018s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:35Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.016s\n\nOK\n"
+        }
+      ],
       "tests_added_since_bind": 0,
       "rebinds": [
         {
@@ -207,7 +253,7 @@
       "statement": "When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.",
       "origin": "intent",
       "evidence": "spec 10.3, 10.4, INV-022, INV-032; reclaim(branch) returns a package but changes no state today",
-      "status": "open",
+      "status": "passed",
       "test": {
         "file": "capabilities/test_c4_branch_reclaim.py",
         "specs": [
@@ -222,7 +268,23 @@
         "build_files_at_bind": [],
         "rebind_reason": "Mutation c4-return-point-not-reanchored survived: the parent position was identical at branch open and at reclaim, so re-anchoring was unobservable. Added a test where the parent moves before reclaim; no existing assertion changed."
       },
-      "runs": [],
+      "runs": [
+        {
+          "at": "2026-10-26T15:30:22Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.070s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:25Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.055s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:35Z",
+          "exit": 0,
+          "tail": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.059s\n\nOK\n"
+        }
+      ],
       "tests_added_since_bind": 0,
       "rebinds": [
         {
@@ -283,7 +345,7 @@
       "statement": "When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).",
       "origin": "intent",
       "evidence": "spec 8.4-8.6, INV-034, INV-035; gap #5 of the V1 handoff",
-      "status": "open",
+      "status": "passed",
       "test": {
         "file": "capabilities/test_c5_multiprocess.py",
         "specs": [
@@ -298,7 +360,23 @@
         "build_files_at_bind": [],
         "rebind_reason": "Mutation c5-torn-read-allowed survived default runs (race too rare). Added a deterministic consistent-snapshot test (second process commits mid-load); no existing assertion changed."
       },
-      "runs": [],
+      "runs": [
+        {
+          "at": "2026-10-26T15:30:24Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.535s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:27Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.481s\n\nOK\n"
+        },
+        {
+          "at": "2026-10-26T15:30:37Z",
+          "exit": 0,
+          "tail": "....\n----------------------------------------------------------------------\nRan 4 tests in 1.515s\n\nOK\n"
+        }
+      ],
       "tests_added_since_bind": 0,
       "rebinds": [
         {
@@ -382,15 +460,11 @@
   "audit": {},
   "build_dirs": [],
   "mutation": {
-    "at": "2026-10-26T15:24:58Z",
+    "at": "2026-10-26T15:30:13Z",
     "by": "claude",
     "total": 10,
-    "killed": 7,
-    "survived": [
-      "c5-torn-read-allowed",
-      "c3-archived-accepts-input",
-      "c4-return-point-not-reanchored"
-    ],
+    "killed": 10,
+    "survived": [],
     "invalid": []
   },
   "gaps": [

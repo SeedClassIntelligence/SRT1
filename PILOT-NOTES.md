@@ -67,3 +67,27 @@ Append, do not rewrite; each entry says whether it was seen in real use or only 
   `living_state` and `streams`) was mistaken for a corrupt projection, so a writer ran `recover()` from a stale replay
   and rewound the projection while others were committing. Fix: consistent read snapshot for `load_model`, and
   recovery only under the write lock after re-checking the damage. Details in the final entry below.
+
+### 8 (final). Concurrency: what the sweep found and the fixes (SRT1 defects, not Forge)
+- Two real defects, both only visible above 6 writers: (a) torn read → spurious "corrupt projection" → stale `recover()`
+  rewound the projection under live writers (12 writers: 6/8 runs passed); (b) rebase budget exhausted at 20 writers
+  (1 event left DEFERRED). Fixes: snapshot reads, recovery only under the write lock after re-checking, bounded
+  optimistic retries then one serialised attempt (liveness), savepoints for nested transactions.
+- After the fixes (this container, SQLite file, `SRT1_C5_PROCS`/`SRT1_C5_PER`): 6×15 6/6, 12×15 15/15, 20×15 10/10,
+  32×10 4/4. Not tested: >32 writers, network filesystems, non-SQLite backends. If only one process will ever write a
+  stream, that is the simplest guarantee; multi-writer is now tested, not assumed.
+
+### 9. Mutation outcome (real use)
+- Run 1: 7/10 killed. Survivors exposed three weak tests (archived stream stored input; return point re-anchoring
+  unobservable; torn read only caught by a rare race). One targeted test each, rebound with reasons. Run 2: **10/10
+  killed**, each by the capability that targets it (the expected-version check is killed by C1's stale-delta test, not C5).
+- Caveat that matters: 10/10 is only as strong as the 10 mutations I thought of.
+
+### 10. Gate headline vs. a blocked top-level capability — friction (real use)
+- `GATE: PASS (blocked, NOT built: C6)` / report `Status: GATE PASSED — with: 1 capability blocked…`. C6 is the spec's
+  Production gate. The qualifier is present but the first words read as success. The owner's rule here is "never describe
+  the Production gate as passing". Suggestion: let the owner mark a capability **required**, so blocked = gate FAIL, or lead
+  the status line with the blocked count (`BLOCKED 1 — gate passed otherwise`).
+
+### 11. Hook-session check, still open
+- Entry 1 stands: a real fresh session has not been observed by me. Owner check outstanding.
