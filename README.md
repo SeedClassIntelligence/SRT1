@@ -41,6 +41,7 @@ Public interface (spec §13): `observe`, `get_state`, `get_context`, `reclaim`, 
 | Reflection / classification → candidate deltas | `srt1/reflection.py` |
 | Retrieval, completeness check, escalation, economy metrics | `srt1/retrieval.py` |
 | Core: observe → validate → atomic commit → snapshot, recovery, reclaim, verify | `srt1/core.py` |
+| Model-backed reflection: prose -> proposed ops -> deterministic compile; record/replay completers (§7, 8.3) | `srt1/llm_proposer.py` |
 | Conservative push, six triggers + micro-reinjection (§13.2–13.3) | `srt1/push.py` |
 | Pull integration: model tool definitions, narrow queries, consuming-model turn loop (§13.1, build step 12) | `srt1/integration.py` |
 | Acceptance matrix (§18), long-history and economy validation (§19) | `tests/` |
@@ -67,14 +68,29 @@ python3 -m unittest discover -s tests -v
 
 Python 3.10+, standard library only.
 
-## The reflection layer: what is real and what is a plug-in
+## The reflection layer
 
-The spec says the model *proposes* and SRT1 *validates*. `Proposer` is that seam. The bundled `RuleProposer` is a
-deterministic baseline driven by explicit markers (`INTENT:`, `DECISION:`, `CORRECTION[id]:`, `SUPERSEDE:`, `SEED:`,
-`QUESTION:`, `RESOLVE:`, `BRANCH:`/`END BRANCH:`, `PIVOT:` …). It cannot understand free prose — unmarked text is
-classified `NO_MATERIAL_CHANGE`, and ungrounded targets are preserved as UNRESOLVED uncertainty rather than guessed.
-To use an LLM, wrap a function in `CallableProposer(fn)` that returns a `StateDelta`; the validator and committer
-are unchanged, so a bad proposal can be rejected but cannot corrupt continuity.
+The spec says the model *proposes* and SRT1 *validates*. `Proposer` is that seam, with two implementations:
+
+- **`RuleProposer`** (default): deterministic, driven by explicit markers (`INTENT:`, `DECISION:`, `CORRECTION[id]:`,
+  `SEED:` ...). Free prose is classified `NO_MATERIAL_CHANGE`.
+- **`LLMProposer(complete)`**: reads free prose. `complete(system, user) -> text` is any model callable;
+  `AnthropicCompleter()` is the Claude one (`claude-opus-5-5`, refusal fallback on, needs `pip install anthropic` and
+  credentials). The model returns a small JSON list of operations about *one* source event, shown only a compact view of
+  current state. Operations are compiled by the same rule engine, so: ids the model names must exist in state (a made-up
+  id becomes preserved UNRESOLVED uncertainty), text cannot inject extra commands, a non-user source cannot create CURRENT
+  authority or change intent, and the model's own confidence caps the delta's confidence (a shaky correction asks the
+  user instead of rewriting state). Garbled output is repaired once, then the event is kept as FAILED and is retryable.
+
+```python
+from srt1 import SRT1, LLMProposer, AnthropicCompleter
+srt = SRT1("srt1.db", proposer=LLMProposer(AnthropicCompleter()))
+```
+
+**Testing rule:** the suite never calls a live model. Record a real run once with `RecordingCompleter(inner, "rec.jsonl")`,
+commit the JSONL, replay with `ReplayCompleter("rec.jsonl")` (ids are normalised, so recordings survive fresh ids; an
+unrecorded prompt is an error). The bundled tests use hand-written *synthetic* model answers: they test the adapter, not
+any model's quality, and **no real model has been run against SRT1 yet**.
 
 ## Known V1 limits (tracked in Forge, not just here)
 
