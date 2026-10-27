@@ -87,6 +87,21 @@ from srt1 import SRT1, LLMProposer, AnthropicCompleter
 srt = SRT1("srt1.db", proposer=LLMProposer(AnthropicCompleter()))
 ```
 
+**Recording a real run** (this is what moves SRT1 toward the spec's Production gate):
+
+```
+pip install anthropic && export ANTHROPIC_API_KEY=...        # or `ant auth login`
+python3 scripts/record_llm_run.py tests/scenarios/storage_correction.json --yes   # ~9 model calls, spends money
+git add tests/fixtures/llm/storage_correction.jsonl           # review it first, then commit
+python3 scripts/record_llm_run.py tests/scenarios/storage_correction.json --replay   # no key, no network
+```
+
+The scenario is nine free-prose turns (intent, decision, constraint, open question, a changed mind, a side idea, an
+answer, an assistant suggestion, an injection attempt) with loose expectations on the resulting state. The script
+refuses without `--yes`, never overwrites a recording, writes the recording even if expectations fail (it is evidence),
+and exits 0 / 1 (expectations failed) / 2 (could not run). Once a recording is committed,
+`tests/test_scenario_runner.py` replays it on every run; until then that one test reports **skipped**.
+
 **Testing rule:** the suite never calls a live model. Record a real run once with `RecordingCompleter(inner, "rec.jsonl")`,
 commit the JSONL, replay with `ReplayCompleter("rec.jsonl")` (ids are normalised, so recordings survive fresh ids; an
 unrecorded prompt is an error). The bundled tests use hand-written *synthetic* model answers: they test the adapter, not
