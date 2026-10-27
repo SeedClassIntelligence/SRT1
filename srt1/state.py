@@ -138,6 +138,15 @@ def concretize(model: Model, delta: dict, at: str) -> dict:
     for ba in d.get("branch_actions", []):
         if ba["action"] == "OPEN":
             ba["branch_id"] = ba.get("branch_id") or new_id("br")
+    # items created while a branch is open belong to it (10.3); a delta that closes a branch ends its scope
+    acts = d.get("branch_actions", [])
+    if not any(a["action"] == "CLOSE" for a in acts):
+        opened = [a["branch_id"] for a in acts if a["action"] in ("OPEN", "RECLAIM")]
+        live = opened or [k for k, b in model.scalars["branches"].items() if b["status"] == "OPEN"]
+        if live:
+            for ci in d.get("create_items", []):
+                if ci["item_type"] != "INTENT":
+                    ci["content"].setdefault("branch_id", live[-1])
     d["at"] = at
     d["event_id"] = d.get("event_id") or new_id("ev")
     d["event_type"] = event_type_for(d)
@@ -242,7 +251,7 @@ def apply_delta(model: Model, d: dict) -> Model:
         if ba["action"] == "OPEN":
             S["branches"] = {**S["branches"], ba["branch_id"]: {
                 "branch_id": ba["branch_id"], "purpose": ba.get("purpose", ""), "status": "OPEN",
-                "opened_version": v, "closed_version": None, "outcome": None,
+                "opened_version": v, "closed_version": None, "outcome": None, "item_ids": [],
                 "return_point": {**stopping, "active_intent": S["active_intent"]}}}
             S["trajectory"] = S["trajectory"] + [{"version": v, "kind": "BRANCH_OPEN",
                                                   "branch_id": ba["branch_id"], "stopping_state": stopping}]
@@ -267,6 +276,12 @@ def apply_delta(model: Model, d: dict) -> Model:
                 rp["focus"], rp["position"], rp["direction"])
             S["trajectory"] = S["trajectory"] + [{"version": v, "kind": "BRANCH_CLOSE",
                                                   "branch_id": ba["branch_id"], "stopping_state": stopping}]
+    for ci in d.get("create_items", []):  # register branch items after branches exist
+        bid = ci["content"].get("branch_id")
+        if bid in S["branches"]:
+            b = dict(S["branches"][bid])
+            b["item_ids"] = list(b.get("item_ids", [])) + [ci["item_id"]]
+            S["branches"] = {**S["branches"], bid: b}
     for k, val in (d.get("focus") or {}).items():
         if k in FOCUS_KEYS:
             S[k] = val

@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 
 from .models import CLARIFY, INVALID, STALE, DeltaError, ProjectionCorrupt, SourceEvent, StateDelta, utcnow
 from .reflection import Proposer, RuleProposer, apply_reclaim, depth_for, similarity
+from . import push
 from .retrieval import ContextBuilder
 from .state import (Model, affected_item_ids, apply_delta, brief, checksum, concretize, item_text, project,
                     semantic_view)
@@ -299,7 +300,23 @@ class SRT1:
         return pkg
 
     def metrics(self, stream_id: str | None = None) -> dict:
-        return self.retriever.platform_metrics(stream_id)
+        """Platform metrics (15.2): context economy plus processing/repair indicators."""
+        m = self.retriever.platform_metrics(stream_id)
+        w, a = (" WHERE stream_id=?", (stream_id,)) if stream_id else ("", ())
+        n = lambda sql, args=(): self.store.one(sql, args)["n"]
+        kinds = lambda *ks: n("SELECT COUNT(*) AS n FROM observations WHERE kind IN (%s)%s" % (
+            ",".join("?" * len(ks)), " AND stream_id=?" if stream_id else ""), ks + a)
+        committed = n("SELECT COUNT(*) AS n FROM continuity_events" + w, a)
+        corrections = n("SELECT COUNT(*) AS n FROM continuity_events WHERE classification='CORRECTION'"
+                        + (" AND stream_id=?" if stream_id else ""), a)
+        user_inputs = n("SELECT COUNT(*) AS n FROM source_events WHERE source_type='USER_INPUT'"
+                        + (" AND stream_id=?" if stream_id else ""), a)
+        return {**m, "duplicates_prevented": kinds("DUPLICATE_SOURCE", "DUPLICATE_DELTA"),
+                "recovery_operations": kinds("RECOVERY"), "committed_events": committed,
+                "corrections": corrections,
+                "rework_rate": round(corrections / committed, 3) if committed else 0.0,
+                "user_repair_burden_per_100_inputs": round(100 * corrections / user_inputs, 1) if user_inputs else 0.0,
+                "push_interventions": kinds("PUSH")}
 
     # ================================================================== reclamation (10.4)
     def reclaim(self, stream_id: str, target: str, commit: bool = True) -> dict:
@@ -440,25 +457,8 @@ class SRT1:
 
     # ================================================================== push continuity (13.2, 13.3)
     def check_push(self, stream_id: str, draft: str) -> dict | None:
-        """Conservative: return a micro-reinjection packet only when superseded material resurfaces as current,
-        or governing corrections/constraints are being contradicted by repetition. Otherwise None."""
-        model = self.load(stream_id)
-        proj = project(model)
-        best_cur = max((similarity(draft, item_text(i)) for i in model.items.values()
-                        if i["authority_status"] == "CURRENT"), default=0.0)
-        for it in model.items.values():
-            if it["authority_status"] in ("SUPERSEDED", "REJECTED") and it["item_type"] != "INTENT":
-                s = similarity(draft, item_text(it))
-                if s >= 0.6 and s > best_cur:
-                    gov = [b for b in proj["applicable_corrections"]
-                           if any(c["item_id"] == it["item_id"] for c in b.get("corrects", []))]
-                    return {"reason": "SUPERSEDED_RESURFACED", "resurfaced": brief(it, False),
-                            "governing": gov or proj["governing_decisions"][-1:],
-                            "active_intent": proj["active_intent"], "current_focus": proj["current_focus"],
-                            "continuation_point": proj["continuation_point"]}
-        recent = proj["recent_significant_changes"]
-        if sum(1 for r in recent[-6:] if r["classification"] == "CORRECTION") >= 3:
-            return {"reason": "REPEATED_CORRECTIONS", "active_intent": proj["active_intent"],
-                    "governing": proj["applicable_corrections"][-3:],
-                    "continuation_point": proj["continuation_point"]}
-        return None
+        """Minimal corrective packet when a push trigger is clearly met, else None. See srt1/push.py."""
+        pkt = push.check_push(self.load(stream_id), draft)
+        if pkt:
+            self.store.log(stream_id, "PUSH", {"reasons": pkt["reasons"]})
+        return pkt

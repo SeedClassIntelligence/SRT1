@@ -41,7 +41,23 @@ Public interface (spec §13): `observe`, `get_state`, `get_context`, `reclaim`, 
 | Reflection / classification → candidate deltas | `srt1/reflection.py` |
 | Retrieval, completeness check, escalation, economy metrics | `srt1/retrieval.py` |
 | Core: observe → validate → atomic commit → snapshot, recovery, reclaim, verify | `srt1/core.py` |
+| Conservative push, six triggers + micro-reinjection (§13.2–13.3) | `srt1/push.py` |
+| Pull integration: model tool definitions, narrow queries, consuming-model turn loop (§13.1, build step 12) | `srt1/integration.py` |
 | Acceptance matrix (§18), long-history and economy validation (§19) | `tests/` |
+
+## Plugging in a consuming model
+
+```python
+from srt1.integration import TOOLS, dispatch, Consumer
+# 1) tool use: pass TOOLS to your model API, route each tool call through dispatch()
+result = dispatch(srt, sid, "srt1_get_context", {"task": "which database do we use?"})
+# 2) or let Consumer run the turn: observe user -> pull context -> model -> push check -> observe reply
+reply = Consumer(srt, sid, llm=lambda context, user_text: my_model(context, user_text)).turn("how do we load config?")
+```
+
+The model gets rendered continuity, never the transcript. If its draft trips a push trigger (superseded material
+resurfacing, a constraint about to be ignored, repeated corrections, a relevant open question or seed, drifting from the
+active intent) it gets one minimal corrective notice and one retry.
 
 ## Run the tests
 

@@ -1,15 +1,15 @@
 # Report — srt1
 
-Generated 2026-10-27T15:48:24Z. Builder: claude. Idea: SRT1 Seed Reflection Tool: a persistent continuity and reflection intelligence implementing the Canonical V1.0 specification
+Generated 2026-10-27T16:04:19Z. Builder: claude. Idea: SRT1 Seed Reflection Tool: a persistent continuity and reflection intelligence implementing the Canonical V1.0 specification
 
 **Status: NOT DONE**
 
 ## Verified (FORGE ran the bound test and it passed)
-- C1: The existing test suite keeps passing (regression guard for behaviour that already exists)  — test `(existing suite)`, last run 2026-10-27T15:48:23Z
-- C2: When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.  — test `capabilities/test_c2_completion.py`, last run 2026-10-27T15:48:23Z
-- C3: Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.  — test `capabilities/test_c3_stream_status.py`, last run 2026-10-27T15:48:23Z
-- C4: When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.  — test `capabilities/test_c4_branch_reclaim.py`, last run 2026-10-27T15:48:23Z
-- C5: When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).  — test `capabilities/test_c5_multiprocess.py`, last run 2026-10-27T15:48:24Z
+- C1: The existing test suite keeps passing (regression guard for behaviour that already exists)  — test `(existing suite)`, last run 2026-10-27T16:04:17Z
+- C2: When the user declares the work complete (COMPLETE:), SRT1 commits a COMPLETION/COMPLETE event that marks the active intent COMPLETED, sets the stream COMPLETED, snapshots, leaves every unresolved item represented, and asks for clarification if the declaration is not from the user.  — test `capabilities/test_c2_completion.py`, last run 2026-10-27T16:04:17Z
+- C3: Stream status moves ACTIVE<->PAUSED, ACTIVE->COMPLETED, ->ARCHIVED only through set_stream_status with a logged reason; illegal transitions are rejected; ARCHIVED streams refuse input but stay readable; PAUSED streams keep source as DEFERRED.  — test `capabilities/test_c3_stream_status.py`, last run 2026-10-27T16:04:18Z
+- C4: When a closed branch is reclaimed, SRT1 commits a RECLAIM event that reopens it at its stopping position and re-anchors its return point to the parent's position at reclaim time; an already-open branch is not re-reclaimed; the result survives recovery.  — test `capabilities/test_c4_branch_reclaim.py`, last run 2026-10-27T16:04:18Z
+- C5: When several OS processes write the same stream file concurrently, no source event is lost, none is committed twice, versions stay contiguous, and verify() passes (including when one message is delivered to several processes).  — test `capabilities/test_c5_multiprocess.py`, last run 2026-10-27T16:04:19Z
 
 ## Not verified
 - none
