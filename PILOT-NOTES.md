@@ -105,3 +105,17 @@ Append, do not rewrite; each entry says whether it was seen in real use or only 
   (c) decide whether to take the patch upstream (`forge.skill` in this repo is untouched).
 - Known limits of the patch: `required` is one-way (no un-require command, deliberately) and the CI baseline check does not
   yet flag a lost `required` flag (direct edits of `forge.json` still trip the hash chain). Neither is tested.
+
+### 13. Forge replaced by the owner's updated `forge.skill` (fingerprint `eef553338d02`) — supersedes entry 12's vendored copy
+- Owner supplied a new `forge.skill` that folds in the `required` capability and closes the two gaps entry 12 listed: the CI
+  baseline check now flags a lost `required` flag, and `spec ref` includes `required`. Vendored with `forge install` from
+  the new file (sha256 of `.forge/forge.py` starts `eef553338d02`; `forge.pin` matches). `doctor` ok; baseline 54 tests OK;
+  the new skill's own suite: 107 tests OK. `pilot/forge-upstream/` (my patch + 9 tests) is now historical only.
+- **Contents beyond `required`, found on review (builder review, not independent):** the new `forge.py` also adds a
+  `ui` command: a read-only viewer — `ui --export FILE` writes a static HTML file; without `--export` it serves
+  `127.0.0.1:<port>` (GET only, Host-header check, CSP, `Cache-Control: no-store`, state embedded with `<>&` escaped, DOM built
+  with `textContent`). It is in the "unlocked" command set (no state lock; reads only). `ui --export` ran here and wrote a file.
+  It opens a localhost listener only when asked; it does not run project code or need keys. Worth stating in the ack note.
+- The skill archive also ships a stray `forge.py.orig` (the viewer build without `required`). Harmless; should be removed upstream.
+- Gate is unchanged: `GATE: FAIL`, `Status: NOT DONE`, because C6 (REQUIRED) is blocked and the Production gate has not been run.
+- Still open and owner-only: the `forge ack forge-update eef553338d02 …` step, and the fresh-session hook check (entry 1).

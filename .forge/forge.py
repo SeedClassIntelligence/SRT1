@@ -412,7 +412,8 @@ def spec_digest(c, only=None):
 
 def spec_ref(st):
     """One identity for 'what done means' right now: every live capability's statement, test command and bound files."""
-    items = sorted((k, spec_digest(c)) for k, c in st["capabilities"].items() if c["status"] != "blocked" or c.get("test"))
+    items = sorted((k, spec_digest(c)) + ((True,) if c.get("required") else ())
+                   for k, c in st["capabilities"].items() if c["status"] != "blocked" or c.get("test") or c.get("required"))
     return hashlib.sha256(canon(items).encode()).hexdigest()[:12]
 
 
@@ -1040,6 +1041,8 @@ def baseline_problems(proj, st, base):
         if c is None:
             hard.append(f"capability {cid} is missing from current (present in baseline)")
             continue
+        if bc.get("required") and not c.get("required"):
+            hard.append(f"capability {cid} lost its REQUIRED flag vs baseline (it was required in the baseline)")
         if not bc.get("test"):
             continue
         keep = set(test_files(bc["test"]))
@@ -1919,6 +1922,178 @@ def cmd_doctor(a):
     sys.exit(2 if bad else 0)
 
 
+# ------------------------------------------------------------------- viewer (read-only)
+def snapshot(proj):
+    """Everything the viewer shows, read from disk. Runs no project code, needs no keys, writes nothing."""
+    proj = Path(proj)
+    snap = {"version": VERSION, "generated": now(), "project": proj.resolve().name}
+    try:
+        st = load(proj)
+    except SystemExit:
+        return {**snap, "error": "forge state is missing or unreadable"}
+    ents = read_log(log_path(proj)) if state_path(proj) else []
+    snap["integrity"] = tamper_problems(proj)
+    snap["state"] = {k: st.get(k) for k in ("name", "idea", "builder", "strict", "require_audit", "keys", "acks",
+                                            "holds", "sources", "audit", "created")}
+    snap["spec_ref"] = spec_ref(st) if st["capabilities"] else None
+    caps = {}
+    for k, c in st["capabilities"].items():
+        t = c.get("test") or {}
+        caps[k] = {"statement": c["statement"], "origin": c.get("origin"), "evidence": c.get("evidence"),
+                   "status": c["status"], "retrofit": bool(c.get("retrofit")), "blocked_reason": c.get("blocked_reason"),
+                   "tried": c.get("tried", []), "rebinds": c.get("rebinds", []), "test_cmd": t.get("cmd"),
+                   "test_files": sorted(test_files(t)) if t else [], "mutation": c.get("mutation"),
+                   "runs": [{"at": r.get("at"), "exit": r.get("exit"), "result": r.get("result"), "tail": (r.get("tail") or "")[-300:]}
+                            for r in (c.get("history", []) + c.get("runs", []))[-30:]]}
+    snap["capabilities"] = caps
+    snap["events"] = [{"seq": e.get("seq"), "at": e.get("at"), "cmd": e.get("cmd"), "detail": e.get("detail"),
+                       "hash": (e.get("hash") or "")[:12]} for e in ents]
+    for name, key in (("last-gate.json", "last_gate"),):
+        try:
+            snap[key] = json.loads((meta_dir(proj) / name).read_text())
+        except (OSError, ValueError):
+            snap[key] = None
+    ov = []
+    try:
+        for line in (meta_dir(proj) / "overrides.jsonl").read_text().splitlines()[-50:]:
+            try:
+                ov.append(json.loads(line))
+            except ValueError:
+                pass
+    except OSError:
+        pass
+    snap["overrides"] = ov
+    snap["audit_label"] = audit_label(st)
+    return snap
+
+
+VIEWER_HTML = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Forge Viewer</title><style>
+:root{--bg:#fafaf8;--fg:#1c1c1a;--mut:#6b6b66;--card:#fff;--bd:#e3e2dc;--ok:#1a7f4b;--bad:#c4361f;--warn:#a86a00;--acc:#3a5bd9}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#141413;--fg:#ecebe6;--mut:#9a9992;--card:#1d1d1b;--bd:#33332f;--ok:#4cc38a;--bad:#ff7a63;--warn:#e8b04a;--acc:#8fa6ff}}
+:root[data-theme=dark]{--bg:#141413;--fg:#ecebe6;--mut:#9a9992;--card:#1d1d1b;--bd:#33332f;--ok:#4cc38a;--bad:#ff7a63;--warn:#e8b04a;--acc:#8fa6ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}h1{font-size:22px;margin:0}h2{font-size:15px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:28px 0 10px}
+.sub{color:var(--mut);margin:2px 0 14px}.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{border:1px solid var(--bd);border-radius:99px;padding:2px 10px;font-size:13px;background:var(--card)}
+.ok{color:var(--ok);border-color:var(--ok)}.bad{color:var(--bad);border-color:var(--bad)}.warn{color:var(--warn);border-color:var(--warn)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.grid .card{margin:0}
+.dots{display:flex;gap:3px;margin:8px 0;flex-wrap:wrap}.dot{width:12px;height:12px;border-radius:3px;background:var(--bd)}.dot.p{background:var(--ok)}.dot.f{background:var(--bad)}
+code,pre{font:12.5px ui-monospace,monospace}pre{margin:6px 0 0;padding:8px;background:var(--bg);border-radius:6px;overflow:auto;max-height:140px;white-space:pre-wrap}
+.ev{display:grid;grid-template-columns:44px 150px 130px 1fr 90px;gap:8px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:13.5px}
+.ev>*{overflow-wrap:anywhere}.mut{color:var(--mut)}input{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;width:100%;max-width:340px}
+button{background:var(--card);color:var(--fg);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;cursor:pointer}
+@media(max-width:700px){.ev{display:flex;flex-wrap:wrap;gap:2px 10px}.ev>:nth-child(2),.ev>:nth-child(5){display:none}.ev>:nth-child(4){flex-basis:100%}}
+</style></head><body><main>
+<h1 id="title">Forge</h1><div class="sub" id="idea"></div><div class="row" id="badges"></div>
+<h2>Capabilities</h2><div class="grid" id="caps"></div>
+<h2>Attention</h2><div id="attn"></div>
+<h2>Event log <span class="mut" id="evn"></span></h2><div class="row" style="margin-bottom:8px"><input id="q" placeholder="filter events…"><button id="theme">theme</button></div><div id="ev"></div>
+<p class="mut" id="foot"></p></main>
+<script id="boot" type="application/json">__BOOT__</script>
+<script>
+const $=id=>document.getElementById(id);
+function h(tag,props,...kids){const e=document.createElement(tag);for(const[k,v]of Object.entries(props||{})){if(k==="class")e.className=v;else e.setAttribute(k,v)}
+for(const c of kids.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(String(c)))}return e}
+let S=null,live=false;
+const pill=(t,c)=>h("span",{class:"pill "+(c||"")},t);
+function render(){if(!S)return;
+ if(S.error){$("title").textContent="Forge";$("idea").textContent=S.error;return}
+ const st=S.state,g=S.last_gate;document.title="Forge — "+st.name;$("title").textContent=st.name;$("idea").textContent=st.idea||"";
+ const b=$("badges");b.replaceChildren(
+  S.integrity.length?pill("log: "+S.integrity[0],"bad"):pill("log chain intact","ok"),
+  g?pill("last gate: "+g.result+" · "+g.at,g.result==="pass"?"ok":"bad"):pill("no gate run yet","warn"),
+  pill(st.strict?"strict (signed decisions)":"not strict","")  ,pill("audit: "+S.audit_label,""),
+  S.spec_ref?pill("spec ref "+S.spec_ref,""):null,pill(S.events.length+" events",""),pill("forge "+S.version,""));
+ const caps=$("caps");caps.replaceChildren();
+ for(const[id,c]of Object.entries(S.capabilities)){
+  const cls={passed:"ok",failed:"bad",reopened:"bad",blocked:"warn"}[c.status]||"";
+  const dots=h("div",{class:"dots"},c.runs.map(r=>h("div",{class:"dot "+((r.exit===0)?"p":(r.exit==null&&!(r.result||"").includes("fail")&&r.result?"":"f")),title:(r.at||"")+" "+(r.exit!=null?"exit "+r.exit:(r.result||""))})));
+  const last=c.runs[c.runs.length-1];
+  caps.append(h("div",{class:"card"},h("div",{class:"row"},h("b",{},id),pill(c.status,cls),pill(c.origin||"?",""),c.retrofit?pill("retrofit","warn"):null),
+   h("div",{},c.statement),dots,
+   c.test_cmd?h("div",{class:"mut"},"test: ",h("code",{},c.test_cmd)," · ",c.test_files.length+" file(s)"):h("div",{class:"mut"},"no test bound"),
+   c.blocked_reason?h("div",{class:"warn"},"blocked: "+c.blocked_reason):null,
+   c.rebinds.length?h("div",{class:"warn"},c.rebinds.length+" rebind(s): "+c.rebinds.map(r=>r.reason).join(" | ")):null,
+   c.mutation?h("div",{class:"mut"},"mutation: "+JSON.stringify(c.mutation)):null,
+   last&&last.tail&&c.status!=="passed"?h("pre",{},last.tail):null))}
+ if(!Object.keys(S.capabilities).length)caps.append(h("div",{class:"mut"},"No capabilities specified yet."));
+ const a=$("attn");a.replaceChildren();let n=0;
+ for(const x of S.state.holds.filter(x=>x.status==="open")){n++;a.append(h("div",{class:"card"},pill("hold · "+x.kind,"warn")," ",x.text,h("div",{class:"mut"},"owner: "+x.owner)))}
+ for(const o of S.overrides){n++;a.append(h("div",{class:"card"},pill("claim override","bad")," ",o.claim,h("div",{class:"mut"},o.at+" — "+o.reason)))}
+ for(const s of S.state.sources.filter(s=>s.verdict!=="permissive"&&!s.accepted_risk)){n++;a.append(h("div",{class:"card"},pill("source "+s.license,"warn")," ",s.repo))}
+ if(g&&g.hard)for(const x of g.hard){n++;a.append(h("div",{class:"card"},pill("gate","bad")," ",x))}
+ if(!n)a.append(h("div",{class:"mut"},"Nothing needs attention."));
+ const f=$("q").value.toLowerCase(),ev=$("ev");ev.replaceChildren();
+ const rows=S.events.filter(e=>!f||(e.cmd+" "+e.detail).toLowerCase().includes(f)).slice().reverse();$("evn").textContent="("+rows.length+")";
+ for(const e of rows)ev.append(h("div",{class:"ev"},h("span",{class:"mut"},"#"+e.seq),h("span",{class:"mut"},e.at),h("b",{},e.cmd),h("span",{},e.detail),h("code",{class:"mut"},e.hash)));
+ $("foot").textContent=(live?"Live, read-only, refreshed ":"Static export, generated ")+S.generated+". The viewer cannot change anything."}
+$("q").addEventListener("input",render);
+$("theme").addEventListener("click",()=>{const r=document.documentElement;r.dataset.theme=(r.dataset.theme==="dark")?"light":"dark"});
+async function poll(){try{const r=await fetch("/api/snapshot",{cache:"no-store"});if(r.ok){S=await r.json();live=true;render()}}catch(e){}setTimeout(poll,2000)}
+S=JSON.parse($("boot").textContent);render();if(location.protocol.startsWith("http"))poll();
+</script></body></html>"""
+
+
+def viewer_page(snap):
+    boot = json.dumps(snap).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    return VIEWER_HTML.replace("__BOOT__", boot)
+
+
+def make_handler(proj, port):
+    import http.server
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *x):
+            pass
+
+        def _ok_host(self):
+            return (self.headers.get("Host") or "") in (f"127.0.0.1:{port}", f"localhost:{port}")
+
+        def do_GET(self):
+            if not self._ok_host():
+                return self.send_error(403, "bad host")
+            if self.path == "/api/snapshot":
+                body, ctype = json.dumps(snapshot(proj)).encode(), "application/json"
+            elif self.path in ("/", "/index.html"):
+                body, ctype = viewer_page(snapshot(proj)).encode(), "text/html; charset=utf-8"
+            else:
+                return self.send_error(404)
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _no(self):
+            self.send_error(405, "read-only viewer")
+        do_POST = do_PUT = do_DELETE = do_PATCH = _no
+    return H
+
+
+def cmd_ui(a):
+    """Read-only live view of a project's process. --export writes one self-contained HTML file instead."""
+    if not state_path(a.project):
+        die(f"no forge project at {a.project}")
+    if a.export:
+        Path(a.export).write_text(viewer_page(snapshot(a.project)))
+        print(f"wrote {a.export} (static, self-contained, no network)")
+        return
+    import http.server
+    srv = http.server.ThreadingHTTPServer(("127.0.0.1", a.port), make_handler(a.project, a.port))
+    port = srv.server_address[1]
+    srv.RequestHandlerClass = make_handler(a.project, port)
+    print(f"Forge viewer (read-only) on http://127.0.0.1:{port}  — Ctrl-C to stop")
+    try:
+        srv.serve_forever()
+    except KeyboardInterrupt:
+        pass
+
+
 # ------------------------------------------------------------------- cli
 def main():
     ap = argparse.ArgumentParser(prog="forge", description=__doc__.split("\n\n")[0])
@@ -1989,10 +2164,12 @@ def main():
         s = proj(sub.add_parser(name)); s.set_defaults(f=fn)
     for name, fn in (("hook-stop", cmd_hook_stop), ("hook-pretool", cmd_hook_pretool), ("hook-session", cmd_hook_session)):
         s = proj(sub.add_parser(name)); s.set_defaults(f=fn)
+    s = proj(sub.add_parser("ui")); s.add_argument("--port", type=int, default=8765); s.add_argument("--export", metavar="FILE")
+    s.set_defaults(f=cmd_ui)
     s = sub.add_parser("license"); s.add_argument("dir"); s.set_defaults(f=cmd_license)
 
     a = ap.parse_args()
-    unlocked = {"init", "adopt", "install", "doctor", "keygen", "license", "hook-stop", "hook-pretool", "hook-session"}
+    unlocked = {"init", "adopt", "install", "doctor", "keygen", "license", "ui", "hook-stop", "hook-pretool", "hook-session"}
     if hasattr(a, "project") and a.cmd not in unlocked and state_path(a.project):
         with Lock(a.project):
             a.f(a)
